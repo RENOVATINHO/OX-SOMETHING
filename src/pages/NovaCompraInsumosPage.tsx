@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { User } from "lucide-react";
-import PageHeader from "@/components/PageHeader";
+import AppLayout from "@/components/AppLayout";
 
 const NovaCompraInsumosPage = () => {
   const navigate = useNavigate();
@@ -12,51 +11,56 @@ const NovaCompraInsumosPage = () => {
 
   const update = (field: string, value: string) => setForm((prev) => ({ ...prev, [field]: value }));
 
-  return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <PageHeader title="Nova compra" />
+  const fieldClass = "w-full bg-background border border-border rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors";
+  const labelClass = "text-sm font-semibold text-foreground mb-1.5 block";
 
-      <div className="flex-1 px-4 py-4">
-        <div className="bg-card rounded-xl shadow-sm divide-y divide-border">
-          <div className="p-4 flex items-center justify-between">
-            <div className="flex-1">
-              <p className="text-xs font-bold text-foreground">Nome da empresa *</p>
-              <input placeholder="Escolha uma empresa" value={form.empresa} onChange={(e) => update("empresa", e.target.value)} className="w-full bg-transparent outline-none text-foreground placeholder:text-muted-foreground" />
+  return (
+    <AppLayout title="Nova Compra de Insumo">
+      <div className="max-w-2xl">
+        <div className="bg-card rounded-xl border border-border p-6 space-y-5">
+          <div>
+            <label className={labelClass}>Nome da empresa *</label>
+            <input placeholder="Escolha uma empresa" value={form.empresa} onChange={(e) => update("empresa", e.target.value)} className={fieldClass} />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label className={labelClass}>Data *</label>
+              <input type="date" value={form.data} onChange={(e) => update("data", e.target.value)} className={fieldClass} />
             </div>
-            <User size={20} className="text-muted-foreground" />
+            <div>
+              <label className={labelClass}>Nº Nota fiscal</label>
+              <input placeholder="Número" value={form.notaFiscal} onChange={(e) => update("notaFiscal", e.target.value)} className={fieldClass} />
+            </div>
           </div>
-          <div className="p-4">
-            <p className="text-xs font-bold text-foreground">Data *</p>
-            <input type="date" placeholder="Ex: 01/01/2024" value={form.data} onChange={(e) => update("data", e.target.value)} className="w-full bg-transparent outline-none text-foreground placeholder:text-muted-foreground" />
+
+          <div>
+            <label className={labelClass}>Produto *</label>
+            <input placeholder="Nome do produto" value={form.produto} onChange={(e) => update("produto", e.target.value)} className={fieldClass} />
           </div>
-          <div className="p-4">
-            <p className="text-xs font-bold text-foreground">Produto *</p>
-            <input placeholder="Nome do produto" value={form.produto} onChange={(e) => update("produto", e.target.value)} className="w-full bg-transparent outline-none text-foreground placeholder:text-muted-foreground" />
-          </div>
-          <div className="p-4">
-            <p className="text-xs font-bold text-foreground">Quantidade *</p>
-            <input placeholder="Quantidade" type="number" value={form.quantidade} onChange={(e) => update("quantidade", e.target.value)} className="w-full bg-transparent outline-none text-foreground placeholder:text-muted-foreground" />
-          </div>
-          <div className="p-4">
-            <p className="text-xs font-bold text-foreground">Valor unitário *</p>
-            <input placeholder="R$ 00,00" value={form.valorUnitario} onChange={(e) => update("valorUnitario", e.target.value)} className="w-full bg-transparent outline-none text-foreground placeholder:text-muted-foreground" />
-          </div>
-          <div className="p-4">
-            <p className="text-xs font-bold text-foreground">Nº Nota fiscal</p>
-            <input placeholder="Número" value={form.notaFiscal} onChange={(e) => update("notaFiscal", e.target.value)} className="w-full bg-transparent outline-none text-foreground placeholder:text-muted-foreground" />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label className={labelClass}>Quantidade *</label>
+              <input placeholder="0" type="number" value={form.quantidade} onChange={(e) => update("quantidade", e.target.value)} className={fieldClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Valor unitário *</label>
+              <input placeholder="R$ 0,00" value={form.valorUnitario} onChange={(e) => update("valorUnitario", e.target.value)} className={fieldClass} />
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="p-4">
-        <button
-          onClick={() => navigate("/compras-insumos")}
-          className="w-full bg-primary text-primary-foreground rounded-full py-4 text-lg font-bold hover:bg-accent transition-colors"
-        >
-          Cadastrar compra
-        </button>
+        <div className="flex gap-3 mt-6">
+          <button type="button" onClick={() => navigate("/compras-insumos")} className="px-6 py-3 rounded-lg border border-border text-foreground font-semibold hover:bg-muted transition-colors text-sm">
+            Cancelar
+          </button>
+          <button onClick={() => navigate("/compras-insumos")} className="bg-primary text-primary-foreground rounded-lg px-8 py-3 text-sm font-bold hover:bg-accent transition-colors">
+            Cadastrar compra
+          </button>
+        </div>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

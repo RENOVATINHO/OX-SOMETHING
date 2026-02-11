@@ -1,134 +1,70 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Menu, Home, ChevronRight, ShoppingCart, TrendingUp, BarChart3, PawPrint, X, User, Skull, Edit, Lock, MessageCircle, LogOut } from "lucide-react";
-
-const menuCards = [
-  { icon: Home, label: "fazenda minas gerais", route: "/dashboard", color: "text-primary" },
-  { icon: PawPrint, label: "Cadastro de Animais", route: "/animais", color: "text-primary" },
-];
-
-const gridCards = [
-  { icon: ShoppingCart, label: "Compra Animais", route: "/compras-animais", color: "text-primary" },
-  { icon: TrendingUp, label: "Venda Animais", route: "/dashboard", color: "text-primary" },
-  { icon: ShoppingCart, label: "Compra Insumos", route: "/compras-insumos", color: "text-primary" },
-  { icon: BarChart3, label: "Relatórios", route: "/relatorios", color: "text-primary" },
-];
-
-const sidebarItems = [
-  { icon: TrendingUp, label: "Animais Vendidos", route: "/dashboard" },
-  { icon: Skull, label: "Animais Mortos", route: "/dashboard" },
-  { icon: User, label: "Editar Cadastro", route: "/dashboard" },
-  { icon: Edit, label: "Alterar Senha", route: "/dashboard" },
-  { icon: MessageCircle, label: "Planos", route: "/dashboard" },
-  { icon: MessageCircle, label: "Whatsapp Desenvolvedores", route: "/dashboard" },
-];
+import { PawPrint, ShoppingCart, TrendingUp, Package, BarChart3, Home } from "lucide-react";
+import AppLayout from "@/components/AppLayout";
 
 const DashboardPage = () => {
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const stats = [
-    { label: "TOTAL", value: 1 },
-    { label: "MATRIZES", value: 0 },
-    { label: "REPRODUTORES", value: 1 },
+    { label: "Total de Animais", value: 1, icon: PawPrint, color: "text-primary" },
+    { label: "Matrizes", value: 0, icon: PawPrint, color: "text-accent" },
+    { label: "Reprodutores", value: 1, icon: PawPrint, color: "text-success" },
+    { label: "Nascimentos", value: 0, icon: PawPrint, color: "text-warning" },
+  ];
+
+  const quickActions = [
+    { icon: PawPrint, label: "Cadastrar Animal", desc: "Adicionar novo animal ao rebanho", route: "/animais/novo" },
+    { icon: ShoppingCart, label: "Nova Compra Animal", desc: "Registrar compra de animais", route: "/compras-animais/nova" },
+    { icon: Package, label: "Nova Compra Insumo", desc: "Registrar compra de insumos", route: "/compras-insumos/nova" },
+    { icon: BarChart3, label: "Ver Relatórios", desc: "Acessar relatórios e análises", route: "/relatorios" },
   ];
 
   return (
-    <div className="min-h-screen bg-background relative">
-      {/* Sidebar overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-50 flex">
-          <div className="w-72 bg-card shadow-2xl flex flex-col animate-in slide-in-from-left">
-            <div className="bg-primary p-6 text-primary-foreground">
-              <div className="flex items-center gap-3">
-                <User size={32} />
-                <div>
-                  <p className="font-bold">guilherme renovato</p>
-                  <p className="text-xs opacity-80">guilhermerenovs@gmail.com</p>
-                </div>
-              </div>
-            </div>
-            <div className="flex-1 py-4">
-              {sidebarItems.map((item) => (
-                <button
-                  key={item.label}
-                  onClick={() => { setSidebarOpen(false); navigate(item.route); }}
-                  className="w-full flex items-center gap-4 px-6 py-4 hover:bg-muted text-foreground"
-                >
-                  <item.icon size={20} className="text-foreground" />
-                  <span className="flex-1 text-left font-semibold">{item.label}</span>
-                  <ChevronRight size={16} className="text-muted-foreground" />
-                </button>
-              ))}
-              <button
-                onClick={() => { setSidebarOpen(false); navigate("/"); }}
-                className="w-full flex items-center gap-4 px-6 py-4 hover:bg-muted text-destructive"
-              >
-                <LogOut size={20} />
-                <span className="font-semibold">Sair</span>
-              </button>
-            </div>
-          </div>
-          <div className="flex-1 bg-foreground/30" onClick={() => setSidebarOpen(false)} />
+    <AppLayout title="Dashboard">
+      {/* Property card */}
+      <div className="bg-primary rounded-xl p-6 mb-8 flex items-center gap-4">
+        <div className="w-12 h-12 bg-primary-foreground/20 rounded-lg flex items-center justify-center">
+          <Home size={24} className="text-primary-foreground" />
         </div>
-      )}
-
-      {/* Header */}
-      <div className="bg-primary text-primary-foreground px-4 py-4 flex items-center">
-        <button onClick={() => setSidebarOpen(true)} className="p-1">
-          <Menu size={28} />
-        </button>
-        <h1 className="flex-1 text-center text-xl font-extrabold tracking-widest">Rebanho Fácil</h1>
-      </div>
-
-      {/* Property bar */}
-      <div className="bg-accent text-accent-foreground px-4 py-3 flex items-center gap-3">
-        <Home size={20} />
         <div>
-          <p className="text-xs opacity-70">Propriedade:</p>
-          <p className="font-bold text-sm">fazenda minas gerais</p>
+          <p className="text-primary-foreground/70 text-sm">Propriedade ativa</p>
+          <p className="text-primary-foreground text-xl font-bold">Fazenda Minas Gerais</p>
         </div>
       </div>
 
-      {/* Stats carousel */}
-      <div className="px-4 py-4 flex gap-3 overflow-x-auto">
+      {/* Stats grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat) => (
-          <div key={stat.label} className="min-w-[140px] bg-card rounded-xl shadow-sm p-4 text-center flex-shrink-0">
-            <p className="text-xs font-bold text-muted-foreground tracking-wide">{stat.label}</p>
-            <p className="text-3xl font-extrabold text-foreground my-2">{stat.value}</p>
-            <PawPrint size={40} className="mx-auto text-muted-foreground/40" />
+          <div key={stat.label} className="bg-card rounded-xl border border-border p-5 flex items-center gap-4">
+            <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+              <stat.icon size={22} className={stat.color} />
+            </div>
+            <div>
+              <p className="text-2xl font-extrabold text-foreground">{stat.value}</p>
+              <p className="text-xs text-muted-foreground font-semibold">{stat.label}</p>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Menu cards */}
-      <div className="px-4 space-y-3">
-        {menuCards.map((card) => (
+      {/* Quick actions */}
+      <h3 className="text-lg font-bold text-foreground mb-4">Ações Rápidas</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {quickActions.map((action) => (
           <button
-            key={card.label}
-            onClick={() => navigate(card.route)}
-            className="w-full bg-card rounded-xl shadow-sm p-6 flex flex-col items-center gap-2 hover:shadow-md transition-shadow"
+            key={action.label}
+            onClick={() => navigate(action.route)}
+            className="bg-card rounded-xl border border-border p-5 text-left hover:shadow-md hover:border-primary/30 transition-all group"
           >
-            <card.icon size={36} className={card.color} />
-            <span className="font-bold text-primary text-sm">{card.label}</span>
+            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
+              <action.icon size={20} className="text-primary" />
+            </div>
+            <p className="font-bold text-foreground text-sm">{action.label}</p>
+            <p className="text-xs text-muted-foreground mt-1">{action.desc}</p>
           </button>
         ))}
       </div>
-
-      {/* Grid cards */}
-      <div className="px-4 py-4 grid grid-cols-2 gap-3">
-        {gridCards.map((card) => (
-          <button
-            key={card.label}
-            onClick={() => navigate(card.route)}
-            className="bg-card rounded-xl shadow-sm p-5 flex flex-col items-center gap-2 hover:shadow-md transition-shadow"
-          >
-            <card.icon size={32} className={card.color} />
-            <span className="font-bold text-primary text-xs text-center">{card.label}</span>
-          </button>
-        ))}
-      </div>
-    </div>
+    </AppLayout>
   );
 };
 
