@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock } from "lucide-react";
-import logoimg from "@assets/logo.png";
+import mascotImg from "@/assets/mascot.png";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -19,7 +19,7 @@ const LoginPage = () => {
       <div className="bg-card rounded-2xl shadow-xl w-full max-w-md p-8">
         <div className="text-center mb-6">
           <h1 className="text-3xl font-extrabold text-primary tracking-wide mb-4">Easy Catle</h1>
-          <img src={logoImg} alt="Logo" className="w-36 h-36 object-contain mx-auto" />
+          <img src={mascotImg} alt="Mascote" className="w-36 h-36 object-contain mx-auto" />
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
