@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock } from "lucide-react";
-import mascotImg from "@/assets/mascot.png";
+import logoimg from "@assets/logo.png";
 
 const LoginPage = () => {
   const navigate = useNavigate();
