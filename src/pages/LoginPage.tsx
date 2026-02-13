@@ -18,7 +18,7 @@ const LoginPage = () => {
     <div className="min-h-screen bg-primary/5 flex items-center justify-center p-4">
       <div className="bg-card rounded-2xl shadow-xl w-full max-w-md p-8">
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-extrabold text-primary tracking-wide mb-4">Easy Catle</h1>
+          <h1 className="text-3xl font-extrabold text-primary tracking-wide mb-4">Easy Cattle</h1>
           <img src={mascotImg} alt="Mascote" className="w-36 h-36 object-contain mx-auto" />
         </div>
 
