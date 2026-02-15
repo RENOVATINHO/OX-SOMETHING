@@ -1,8 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import { PawPrint, ShoppingCart, TrendingUp, Package, BarChart3, Home } from "lucide-react";
+import { PawPrint, ShoppingCart, TrendingUp, Package, BarChart3 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AppLayout from "@/components/AppLayout";
+import barnIcon from "@/assets/barn-icon.png";
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -37,8 +38,8 @@ const DashboardPage = () => {
     <AppLayout title="Dashboard">
       {/* Property card */}
       <div className="bg-primary rounded-xl p-6 mb-8 flex items-center gap-4">
-        <div className="w-12 h-12 bg-primary-foreground/20 rounded-lg flex items-center justify-center">
-          <Home size={24} className="text-primary-foreground" />
+        <div className="w-12 h-12 bg-primary-foreground/20 rounded-lg flex items-center justify-center p-2">
+          <img src={barnIcon} alt="Propriedade" className="w-8 h-8 invert brightness-200" />
         </div>
         <div>
           <p className="text-primary-foreground/70 text-sm">Propriedade ativa</p>
