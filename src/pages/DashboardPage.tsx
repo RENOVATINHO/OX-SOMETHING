@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { PawPrint, ShoppingCart, TrendingUp, Package, BarChart3, Home } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AppLayout from "@/components/AppLayout";
 
 const DashboardPage = () => {
@@ -11,6 +13,18 @@ const DashboardPage = () => {
     { label: "Reprodutores", value: 1, icon: PawPrint, color: "text-success" },
     { label: "Nascimentos", value: 0, icon: PawPrint, color: "text-warning" },
   ];
+
+  const insumosData = [
+    { tipo: "Ração", quantidade: 120, valor: 4800 },
+    { tipo: "Vacina", quantidade: 85, valor: 3200 },
+    { tipo: "Sal Mineral", quantidade: 60, valor: 1800 },
+    { tipo: "Medicamento", quantidade: 45, valor: 5400 },
+    { tipo: "Suplemento", quantidade: 30, valor: 2100 },
+    { tipo: "Vermífugo", quantidade: 70, valor: 2800 },
+  ];
+
+  const totalEstoque = insumosData.reduce((acc, item) => acc + item.valor, 0);
+  const totalItens = insumosData.reduce((acc, item) => acc + item.quantidade, 0);
 
   const quickActions = [
     { icon: PawPrint, label: "Cadastrar Animal", desc: "Adicionar novo animal ao rebanho", route: "/animais/novo" },
@@ -47,7 +61,61 @@ const DashboardPage = () => {
         ))}
       </div>
 
-      {/* Quick actions */}
+      {/* Estoque de Insumos */}
+      <div className="bg-card rounded-xl border border-border p-6 mb-8">
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="text-lg font-bold text-foreground">Estoque de Insumos</h3>
+          <div className="flex gap-4 text-sm">
+            <span className="text-muted-foreground">Total itens: <strong className="text-foreground">{totalItens}</strong></span>
+            <span className="text-muted-foreground">Valor total: <strong className="text-primary">R$ {totalEstoque.toLocaleString("pt-BR")}</strong></span>
+          </div>
+        </div>
+
+        <Tabs defaultValue="quantidade" className="mt-4">
+          <TabsList className="mb-4">
+            <TabsTrigger value="quantidade">Quantidade</TabsTrigger>
+            <TabsTrigger value="valor">Valor (R$)</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="quantidade">
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={insumosData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 15% 22%)" />
+                  <XAxis dataKey="tipo" tick={{ fill: "hsl(215 15% 55%)", fontSize: 12 }} />
+                  <YAxis tick={{ fill: "hsl(215 15% 55%)", fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "hsl(220 20% 14%)", border: "1px solid hsl(220 15% 22%)", borderRadius: "8px", color: "hsl(210 20% 90%)" }}
+                    labelStyle={{ color: "hsl(210 20% 90%)", fontWeight: "bold" }}
+                    formatter={(value: number) => [`${value} un`, "Quantidade"]}
+                  />
+                  <Bar dataKey="quantidade" fill="hsl(215 70% 50%)" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="valor">
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={insumosData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 15% 22%)" />
+                  <XAxis dataKey="tipo" tick={{ fill: "hsl(215 15% 55%)", fontSize: 12 }} />
+                  <YAxis tick={{ fill: "hsl(215 15% 55%)", fontSize: 12 }} tickFormatter={(v) => `R$${v}`} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "hsl(220 20% 14%)", border: "1px solid hsl(220 15% 22%)", borderRadius: "8px", color: "hsl(210 20% 90%)" }}
+                    labelStyle={{ color: "hsl(210 20% 90%)", fontWeight: "bold" }}
+                    formatter={(value: number) => [`R$ ${value.toLocaleString("pt-BR")}`, "Valor"]}
+                  />
+                  <Bar dataKey="valor" fill="hsl(160 60% 45%)" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+
       <h3 className="text-lg font-bold text-foreground mb-4">Ações Rápidas</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {quickActions.map((action) => (
