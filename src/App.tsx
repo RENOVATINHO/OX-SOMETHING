@@ -12,6 +12,7 @@ import NovaCompraInsumosPage from "./pages/NovaCompraInsumosPage";
 import RelatoriosPage from "./pages/RelatoriosPage";
 import ComprasAnimaisListPage from "./pages/ComprasAnimaisListPage";
 import ComprasInsumosListPage from "./pages/ComprasInsumosListPage";
+import CadastrosPage from "./pages/CadastrosPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/animais" element={<AnimaisPage />} />
           <Route path="/animais/novo" element={<NovoAnimalPage />} />
+          <Route path="/cadastros" element={<CadastrosPage />} />
           <Route path="/compras-animais" element={<ComprasAnimaisListPage />} />
           <Route path="/compras-animais/nova" element={<NovaCompraAnimaisPage />} />
           <Route path="/compras-insumos" element={<ComprasInsumosListPage />} />
