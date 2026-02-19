@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { UserPlus, Package, PawPrint, DollarSign } from "lucide-react";
+import { UserPlus, Package, PawPrint, DollarSign, Fence } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 
 const options = [
@@ -7,6 +7,7 @@ const options = [
   { icon: Package, label: "Novos Insumos", desc: "Registrar compra de insumos", route: "/compras-insumos/nova" },
   { icon: PawPrint, label: "Novos Animais", desc: "Registrar compra de animais", route: "/compras-animais/nova" },
   { icon: DollarSign, label: "Nova Venda", desc: "Registrar uma nova venda", route: "/cadastros/nova-venda" },
+  { icon: Fence, label: "Novo Pasto", desc: "Cadastrar um novo pasto", route: "/cadastros/novo-pasto" },
 ];
 
 const CadastrosPage = () => {
