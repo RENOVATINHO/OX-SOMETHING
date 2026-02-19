@@ -14,7 +14,77 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      compras_insumos: {
+        Row: {
+          created_at: string
+          id: string
+          nota_fiscal: string | null
+          produto: string
+          quantidade: number
+          valor: number
+          vendedor_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nota_fiscal?: string | null
+          produto: string
+          quantidade: number
+          valor: number
+          vendedor_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nota_fiscal?: string | null
+          produto?: string
+          quantidade?: number
+          valor?: number
+          vendedor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compras_insumos_vendedor_id_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "vendedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendedores: {
+        Row: {
+          cidade: string | null
+          created_at: string
+          documento: string | null
+          estado: string | null
+          id: string
+          nome: string
+          telefone: string | null
+          tipo: string
+        }
+        Insert: {
+          cidade?: string | null
+          created_at?: string
+          documento?: string | null
+          estado?: string | null
+          id?: string
+          nome: string
+          telefone?: string | null
+          tipo: string
+        }
+        Update: {
+          cidade?: string | null
+          created_at?: string
+          documento?: string | null
+          estado?: string | null
+          id?: string
+          nome?: string
+          telefone?: string | null
+          tipo?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
