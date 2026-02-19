@@ -6,8 +6,7 @@ import mascotImg from "@/assets/mascot.png";
 const navItems = [
   { icon: Home, label: "Dashboard", route: "/dashboard" },
   { icon: PawPrint, label: "Animais", route: "/animais" },
-  { icon: ShoppingCart, label: "Compra Animais", route: "/compras-animais" },
-  { icon: Package, label: "Compra Insumos", route: "/compras-insumos" },
+  { icon: ShoppingCart, label: "Cadastros", route: "/cadastros" },
   { icon: BarChart3, label: "Relatórios", route: "/relatorios" },
 ];
 
