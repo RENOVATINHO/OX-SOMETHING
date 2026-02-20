@@ -1,11 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { PawPrint, ShoppingCart, TrendingUp, Package, BarChart3 } from "lucide-react";
+import { ShoppingCart, TrendingUp, Package, BarChart3 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import AppLayout from "@/components/AppLayout";
-import barnIcon from "@/assets/barn-icon.png";
+import celeiroIcon from "@/assets/celeiro.png";
+import rebanhoIcon from "@/assets/rebanho.png";
+import vacaIcon from "@/assets/vaca.png";
+import touroIcon from "@/assets/touro.png";
+import bezerroIcon from "@/assets/bezerro.png";
 
 const animaisMensal = [
   { periodo: "Jan", quantidade: 120 }, { periodo: "Fev", quantidade: 125 },
@@ -67,18 +71,16 @@ const DashboardPage = () => {
   const navigate = useNavigate();
 
   const stats = [
-    { label: "Total de Animais", value: 1, icon: PawPrint, color: "text-primary" },
-    { label: "Matrizes", value: 0, icon: PawPrint, color: "text-accent" },
-    { label: "Reprodutores", value: 1, icon: PawPrint, color: "text-success" },
-    { label: "Nascimentos", value: 0, icon: PawPrint, color: "text-warning" },
+    { label: "Total de Animais", value: 1, img: rebanhoIcon },
+    { label: "Matrizes", value: 0, img: vacaIcon },
+    { label: "Reprodutores", value: 1, img: touroIcon },
+    { label: "Nascimentos", value: 0, img: bezerroIcon },
   ];
 
   const insumosData = [
     { tipo: "Ração", quantidade: 120, valor: 4800 },
     { tipo: "Vacina", quantidade: 85, valor: 3200 },
-    { tipo: "Sal Mineral", quantidade: 60, valor: 1800 },
     { tipo: "Medicamento", quantidade: 45, valor: 5400 },
-    { tipo: "Suplemento", quantidade: 30, valor: 2100 },
     { tipo: "Vermífugo", quantidade: 70, valor: 2800 },
   ];
 
@@ -96,11 +98,11 @@ const DashboardPage = () => {
     <AppLayout title="Dashboard">
       {/* Property card */}
       <div className="bg-primary rounded-xl p-6 mb-8 flex items-center gap-4">
-        <div className="w-12 h-12 bg-primary-foreground/20 rounded-lg flex items-center justify-center p-2">
-          <img src={barnIcon} alt="Propriedade" className="w-8 h-8 invert brightness-200" />
+        <div className="w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden">
+          <img src={celeiroIcon} alt="Propriedade" className="w-12 h-12 object-cover" />
         </div>
         <div>
-          <p className="text-primary-foreground/70 text-sm">Propriedade ativa</p>
+          <p className="text-primary-foreground/70 text-sm">Propriedade</p>
           <p className="text-primary-foreground text-xl font-bold">Fazenda Minas Gerais</p>
         </div>
       </div>
@@ -109,8 +111,8 @@ const DashboardPage = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat) => (
           <div key={stat.label} className="bg-card rounded-xl border border-border p-5 flex items-center gap-4">
-            <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
-              <stat.icon size={22} className={stat.color} />
+            <div className="w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden">
+              <img src={stat.img} alt={stat.label} className="w-12 h-12 object-cover" />
             </div>
             <div>
               <p className="text-2xl font-extrabold text-foreground">{stat.value}</p>
