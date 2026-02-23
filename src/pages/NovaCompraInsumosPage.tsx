@@ -1,24 +1,34 @@
+// ==============================
+// NovaCompraInsumosPage.tsx — Formulário para registrar nova compra de insumos
+// Insumos = ração, vacinas, medicamentos, vermífugos, etc.
+// Fluxo: selecionar empresa vendedora → preencher produto, quantidade, valor → salvar
+// ==============================
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import AppLayout from "@/components/AppLayout";
 
+// Tipo simplificado dos vendedores — só precisamos de id e nome para o select
 type Vendedor = { id: string; nome: string };
 
 const NovaCompraInsumosPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-  const [vendedores, setVendedores] = useState<Vendedor[]>([]);
+  const [loading, setLoading] = useState(false);              // Controle de estado durante submit
+  const [vendedores, setVendedores] = useState<Vendedor[]>([]); // Vendedores disponíveis para seleção
+
+  // Estado do formulário de compra de insumo
   const [form, setForm] = useState({
-    vendedor_id: "",
-    produto: "",
-    quantidade: "",
-    valor: "",
-    notaFiscal: "",
+    vendedor_id: "",    // FK para o vendedor selecionado
+    produto: "",        // Nome do produto (ex: Ração Nelore, Vacina Aftosa)
+    quantidade: "",     // Quantidade em unidades/sacos
+    valor: "",          // Valor total da compra em R$
+    notaFiscal: "",     // Número da nota fiscal (opcional)
   });
 
+  // Carrega vendedores do banco ao montar o componente — mesmo mecanismo de NovaCompraAnimaisPage
   useEffect(() => {
     supabase
       .from("vendedores")
@@ -29,33 +39,40 @@ const NovaCompraInsumosPage = () => {
       });
   }, []);
 
+  // Atualiza um campo específico do formulário
   const update = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
+  // Handler de submit: valida e insere na tabela compras_insumos
   const handleSubmit = async () => {
+    // Validação dos campos obrigatórios
     if (!form.vendedor_id || !form.produto.trim() || !form.quantidade || !form.valor) {
       toast({ title: "Erro", description: "Preencha todos os campos obrigatórios", variant: "destructive" });
       return;
     }
 
     setLoading(true);
+
+    // Insere o registro de compra de insumo no banco de dados
     const { error } = await supabase.from("compras_insumos").insert({
       vendedor_id: form.vendedor_id,
       produto: form.produto.trim(),
-      quantidade: parseInt(form.quantidade),
-      valor: parseFloat(form.valor),
-      nota_fiscal: form.notaFiscal.trim() || null,
+      quantidade: parseInt(form.quantidade),        // Converte para inteiro
+      valor: parseFloat(form.valor),                // Converte para decimal
+      nota_fiscal: form.notaFiscal.trim() || null,  // Nota fiscal é opcional
     });
+
     setLoading(false);
 
     if (error) {
       toast({ title: "Erro ao cadastrar", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Compra de insumo registrada com sucesso!" });
-      navigate("/cadastros");
+      navigate("/cadastros"); // Volta para o hub de cadastros
     }
   };
 
+  // Classes CSS reutilizáveis para consistência visual
   const fieldClass =
     "w-full bg-background border border-border rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors";
   const labelClass = "text-sm font-semibold text-foreground mb-1.5 block";
@@ -64,9 +81,12 @@ const NovaCompraInsumosPage = () => {
     <AppLayout title="Nova Compra de Insumo">
       <div className="max-w-2xl">
         <div className="bg-card rounded-xl border border-border p-6 space-y-5">
+
+          {/* ===== SELEÇÃO DE EMPRESA VENDEDORA ===== */}
           <div>
             <label className={labelClass}>Nome da empresa *</label>
             {vendedores.length > 0 ? (
+              // Select com empresas cadastradas no banco
               <select
                 value={form.vendedor_id}
                 onChange={(e) => update("vendedor_id", e.target.value)}
@@ -80,6 +100,7 @@ const NovaCompraInsumosPage = () => {
                 ))}
               </select>
             ) : (
+              // Estado vazio: nenhuma empresa cadastrada
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Nenhuma empresa cadastrada.</p>
                 <button
@@ -91,6 +112,7 @@ const NovaCompraInsumosPage = () => {
                 </button>
               </div>
             )}
+            {/* Link rápido para cadastrar nova empresa */}
             {vendedores.length > 0 && (
               <button
                 type="button"
@@ -102,6 +124,7 @@ const NovaCompraInsumosPage = () => {
             )}
           </div>
 
+          {/* ===== PRODUTO ===== */}
           <div>
             <label className={labelClass}>Produto *</label>
             <input
@@ -112,6 +135,7 @@ const NovaCompraInsumosPage = () => {
             />
           </div>
 
+          {/* ===== QUANTIDADE E VALOR ===== */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
               <label className={labelClass}>Quantidade (sacos) *</label>
@@ -138,6 +162,7 @@ const NovaCompraInsumosPage = () => {
             </div>
           </div>
 
+          {/* ===== NOTA FISCAL (OPCIONAL) ===== */}
           <div>
             <label className={labelClass}>Nº Nota Fiscal</label>
             <input
@@ -149,6 +174,7 @@ const NovaCompraInsumosPage = () => {
           </div>
         </div>
 
+        {/* ===== BOTÕES DE AÇÃO ===== */}
         <div className="flex gap-3 mt-6">
           <button
             type="button"
