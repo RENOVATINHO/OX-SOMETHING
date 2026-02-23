@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Home, PawPrint, ShoppingCart, Package, BarChart3, User, LogOut, TrendingUp, Skull, Edit, Lock } from "lucide-react";
 import mascotImg from "@/assets/mascot.png";
-import farmBg from "@/assets/farm-bg.jpg";
+import grassBg from "@/assets/grass-bg.jpg";
 
 const navItems = [
   { icon: Home, label: "Dashboard", route: "/dashboard" },
@@ -100,7 +100,7 @@ const AppLayout = ({ children, title }: AppLayoutProps) => {
       <div
         className="flex-1 flex flex-col min-h-screen relative"
         style={{
-          backgroundImage: `url(${farmBg})`,
+          backgroundImage: `url(${grassBg})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundAttachment: "fixed",
