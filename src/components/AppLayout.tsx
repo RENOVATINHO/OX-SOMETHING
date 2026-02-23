@@ -2,7 +2,6 @@ import { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Home, PawPrint, ShoppingCart, Package, BarChart3, User, LogOut, TrendingUp, Skull, Edit, Lock } from "lucide-react";
 import mascotImg from "@/assets/mascot.png";
-import grassBg from "@/assets/grass-bg.jpg";
 
 const navItems = [
   { icon: Home, label: "Dashboard", route: "/dashboard" },
@@ -97,22 +96,14 @@ const AppLayout = ({ children, title }: AppLayoutProps) => {
       </aside>
 
       {/* Main content */}
-      <div
-        className="flex-1 flex flex-col min-h-screen relative"
-        style={{
-          backgroundImage: `url(${grassBg})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundAttachment: "fixed",
-        }}
-      >
+      <div className="flex-1 flex flex-col min-h-screen">
         {/* Top bar */}
-        <header className="h-16 border-b border-border bg-card/90 backdrop-blur-sm px-8 flex items-center sticky top-0 z-10">
+        <header className="h-16 border-b border-border bg-card px-8 flex items-center sticky top-0 z-10">
           <h2 className="text-xl font-bold text-foreground">{title}</h2>
         </header>
 
-        {/* Content with overlay for readability */}
-        <main className="flex-1 p-8 bg-background/80 backdrop-blur-[2px]">
+        {/* Content */}
+        <main className="flex-1 p-8">
           {children}
         </main>
       </div>
