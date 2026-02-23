@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      compras_animais: {
+        Row: {
+          created_at: string
+          faixa_etaria: string
+          id: string
+          lote: string
+          numero_gta: string | null
+          observacao: string | null
+          quantidade: number
+          sexo: string
+          valor_unitario: number
+          vendedor_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          faixa_etaria: string
+          id?: string
+          lote: string
+          numero_gta?: string | null
+          observacao?: string | null
+          quantidade: number
+          sexo: string
+          valor_unitario: number
+          vendedor_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          faixa_etaria?: string
+          id?: string
+          lote?: string
+          numero_gta?: string | null
+          observacao?: string | null
+          quantidade?: number
+          sexo?: string
+          valor_unitario?: number
+          vendedor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compras_animais_vendedor_id_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "vendedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compras_insumos: {
         Row: {
           created_at: string
