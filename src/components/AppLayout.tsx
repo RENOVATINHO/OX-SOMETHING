@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, PawPrint, ShoppingCart, Package, BarChart3, User, LogOut, TrendingUp, Skull, Edit, Lock } from "lucide-react";
+import { Home, PawPrint, ShoppingCart, Package, BarChart3, User, LogOut, TrendingUp, Skull, Edit, Lock, ArrowLeft } from "lucide-react";
 import mascotImg from "@/assets/mascot.png";
 
 const navItems = [
@@ -25,6 +25,7 @@ interface AppLayoutProps {
 const AppLayout = ({ children, title }: AppLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const isDashboard = location.pathname === "/dashboard";
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -98,7 +99,12 @@ const AppLayout = ({ children, title }: AppLayoutProps) => {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Top bar */}
-        <header className="h-16 border-b border-border bg-card px-8 flex items-center sticky top-0 z-10">
+        <header className="h-16 border-b border-border bg-card px-8 flex items-center gap-3 sticky top-0 z-10">
+          {!isDashboard && (
+            <button onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground transition-colors p-1">
+              <ArrowLeft size={20} />
+            </button>
+          )}
           <h2 className="text-xl font-bold text-foreground">{title}</h2>
         </header>
 

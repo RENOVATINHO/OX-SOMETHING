@@ -122,8 +122,8 @@ const DashboardPage = () => {
         ))}
       </div>
 
-      {/* Gráficos lado a lado */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      {/* Gráficos empilhados */}
+      <div className="space-y-6 mb-8">
         {/* Estoque de Insumos */}
         <div className="bg-card rounded-xl border border-border p-6">
           <div className="flex items-center justify-between mb-1">
