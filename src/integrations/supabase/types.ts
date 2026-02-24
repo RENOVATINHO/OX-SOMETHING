@@ -99,33 +99,6 @@ export type Database = {
           },
         ]
       }
-      pastos: {
-        Row: {
-          area_hectares: number
-          area_m2: number
-          coordenadas: Json
-          created_at: string
-          id: string
-          nome: string
-        }
-        Insert: {
-          area_hectares: number
-          area_m2: number
-          coordenadas: Json
-          created_at?: string
-          id?: string
-          nome: string
-        }
-        Update: {
-          area_hectares?: number
-          area_m2?: number
-          coordenadas?: Json
-          created_at?: string
-          id?: string
-          nome?: string
-        }
-        Relationships: []
-      }
       vendedores: {
         Row: {
           cidade: string | null
