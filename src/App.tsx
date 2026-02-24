@@ -21,6 +21,7 @@ import ComprasAnimaisListPage from "./pages/ComprasAnimaisListPage";
 import ComprasInsumosListPage from "./pages/ComprasInsumosListPage";
 import CadastrosPage from "./pages/CadastrosPage";
 import NovoVendedorPage from "./pages/NovoVendedorPage";
+import NovoPastoPage from "./pages/NovoPastoPage";
 import NotFound from "./pages/NotFound";
 
 // Instância única do QueryClient — gerencia cache de requisições em toda a app
@@ -51,6 +52,7 @@ const App = () => (
           {/* Módulo de Cadastros: hub central para criar vendedores, compras, etc. */}
           <Route path="/cadastros" element={<CadastrosPage />} />
           <Route path="/cadastros/novo-vendedor" element={<NovoVendedorPage />} />
+          <Route path="/cadastros/novo-pasto" element={<NovoPastoPage />} />
 
           {/* Módulo de Compras de Animais: listagem e formulário de nova compra */}
           <Route path="/compras-animais" element={<ComprasAnimaisListPage />} />
