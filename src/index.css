@@ -1,65 +1,106 @@
+/* ==============================
+   index.css — Estilos globais e Design System da aplicação Easy Cattle
+   Define variáveis de tema (design tokens) usando CSS custom properties em HSL
+   Todas as cores da aplicação são controladas a partir daqui via Tailwind CSS
+   ============================== */
+
+/* Importa a fonte Nunito do Google Fonts — usada em toda a aplicação */
+/* Pesos disponíveis: 400 (regular), 600 (semibold), 700 (bold), 800 (extrabold) */
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Diretivas do Tailwind CSS — gera as classes utilitárias */
+@tailwind base;       /* Reset CSS + estilos base do Tailwind */
+@tailwind components; /* Classes de componentes customizados */
+@tailwind utilities;  /* Classes utilitárias (flex, p-4, text-sm, etc.) */
 
+/* ===== VARIÁVEIS DE TEMA (DESIGN TOKENS) ===== */
+/* Todas as cores são definidas em formato HSL (sem a função hsl()) */
+/* Isso permite que o Tailwind adicione opacidade dinamicamente: bg-primary/50 */
 @layer base {
   :root {
+    /* Cor de fundo principal da aplicação (cinza escuro azulado) */
     --background: 220 20% 10%;
+    /* Cor do texto principal (cinza claro) */
     --foreground: 210 20% 90%;
 
+    /* Cor de fundo dos cards e painéis (cinza escuro levemente mais claro que o background) */
     --card: 220 20% 14%;
+    /* Cor do texto dentro dos cards */
     --card-foreground: 210 20% 90%;
 
+    /* Cor de fundo de popovers e menus dropdown */
     --popover: 220 20% 14%;
     --popover-foreground: 210 20% 90%;
 
+    /* Cor primária da marca — verde esmeralda (usada em botões, links, destaques) */
     --primary: 160 55% 40%;
+    /* Texto sobre fundo primário — branco puro para máximo contraste */
     --primary-foreground: 0 0% 100%;
 
+    /* Cor secundária — cinza azulado escuro (para elementos menos importantes) */
     --secondary: 220 20% 18%;
     --secondary-foreground: 210 20% 85%;
 
+    /* Cor para elementos silenciados/inativos (backgrounds sutis, hover states) */
     --muted: 220 15% 18%;
+    /* Texto em tom mais fraco — usado para labels, placeholders e textos secundários */
     --muted-foreground: 215 15% 55%;
 
+    /* Cor de destaque/accent — verde mais claro que a primária (hover de botões) */
     --accent: 160 45% 50%;
     --accent-foreground: 0 0% 100%;
 
+    /* Cor de erro/perigo — vermelho (usado em mensagens de erro, botão de deletar) */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
+    /* Cor de sucesso — verde (usado em indicadores de operação bem-sucedida) */
     --success: 142 60% 40%;
     --success-foreground: 0 0% 100%;
 
+    /* Cor de alerta/warning — amarelo/laranja (usado em avisos) */
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
+    /* Cor das bordas — cinza sutil para separar visualmente os elementos */
     --border: 220 15% 22%;
+    /* Cor de borda para campos de input */
     --input: 220 15% 22%;
+    /* Cor do anel de foco (focus ring) — usa a mesma cor primária */
     --ring: 160 55% 40%;
 
+    /* Raio de borda padrão para cards e botões */
     --radius: 0.75rem;
 
+    /* Gradiente do cabeçalho — vai de um cinza mais escuro para um mais claro */
     --header-start: 220 30% 12%;
     --header-end: 220 25% 16%;
 
+    /* ===== VARIÁVEIS DA SIDEBAR ===== */
+    /* Cor de fundo da barra lateral de navegação */
     --sidebar-background: 220 22% 12%;
+    /* Cor do texto na sidebar */
     --sidebar-foreground: 210 20% 90%;
+    /* Cor primária usada nos itens ativos da sidebar */
     --sidebar-primary: 160 55% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
+    /* Cor de hover dos itens da sidebar */
     --sidebar-accent: 220 20% 18%;
     --sidebar-accent-foreground: 210 20% 85%;
+    /* Bordas e anel de foco da sidebar */
     --sidebar-border: 220 15% 20%;
     --sidebar-ring: 160 55% 40%;
   }
 }
 
+/* ===== ESTILOS BASE GLOBAIS ===== */
 @layer base {
+  /* Aplica a cor de borda padrão a todos os elementos com borda */
   * {
     @apply border-border;
   }
+  /* Aplica cor de fundo, cor de texto e fonte Nunito ao body */
+  /* A classe font-nunito é definida no tailwind.config.ts */
   body {
     @apply bg-background text-foreground font-nunito;
   }
