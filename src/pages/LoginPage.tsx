@@ -87,7 +87,7 @@ const LoginPage = () => {
           {/* Link para cadastro de novo usuário (ainda não implementado) */}
           <p className="text-center text-sm text-muted-foreground">
             Ainda não é membro?{" "}
-            <button type="button" className="text-primary font-bold hover:underline">Cadastre-se</button>
+            <button type="button" onClick={() => navigate("/cadastrar-se")} className="text-primary font-bold hover:underline">Cadastre-se</button>
           </p>
         </form>
       </div>
