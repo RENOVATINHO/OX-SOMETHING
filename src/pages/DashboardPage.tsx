@@ -21,30 +21,9 @@ import bezerroIcon from "@/assets/bezerro.png";
 
 // ===== DADOS MOCKADOS DO GRÁFICO DE ANIMAIS =====
 // Dados de estoque de animais agrupados por mês
-const animaisMensal = [
-  { periodo: "Jan", quantidade: 120 }, { periodo: "Fev", quantidade: 125 },
-  { periodo: "Mar", quantidade: 132 }, { periodo: "Abr", quantidade: 128 },
-  { periodo: "Mai", quantidade: 140 }, { periodo: "Jun", quantidade: 155 },
-  { periodo: "Jul", quantidade: 160 }, { periodo: "Ago", quantidade: 158 },
-  { periodo: "Set", quantidade: 165 }, { periodo: "Out", quantidade: 172 },
-  { periodo: "Nov", quantidade: 180 }, { periodo: "Dez", quantidade: 185 },
-];
+const animaisMensal: { periodo: string; quantidade: number }[] = [];
 
-// Dados de estoque de animais agrupados por quinzena (maior granularidade)
-const animaisQuinzenal = [
-  { periodo: "Jan 1Q", quantidade: 118 }, { periodo: "Jan 2Q", quantidade: 122 },
-  { periodo: "Fev 1Q", quantidade: 124 }, { periodo: "Fev 2Q", quantidade: 126 },
-  { periodo: "Mar 1Q", quantidade: 129 }, { periodo: "Mar 2Q", quantidade: 134 },
-  { periodo: "Abr 1Q", quantidade: 130 }, { periodo: "Abr 2Q", quantidade: 127 },
-  { periodo: "Mai 1Q", quantidade: 135 }, { periodo: "Mai 2Q", quantidade: 142 },
-  { periodo: "Jun 1Q", quantidade: 148 }, { periodo: "Jun 2Q", quantidade: 157 },
-  { periodo: "Jul 1Q", quantidade: 159 }, { periodo: "Jul 2Q", quantidade: 161 },
-  { periodo: "Ago 1Q", quantidade: 156 }, { periodo: "Ago 2Q", quantidade: 159 },
-  { periodo: "Set 1Q", quantidade: 162 }, { periodo: "Set 2Q", quantidade: 167 },
-  { periodo: "Out 1Q", quantidade: 170 }, { periodo: "Out 2Q", quantidade: 174 },
-  { periodo: "Nov 1Q", quantidade: 177 }, { periodo: "Nov 2Q", quantidade: 182 },
-  { periodo: "Dez 1Q", quantidade: 183 }, { periodo: "Dez 2Q", quantidade: 187 },
-];
+const animaisQuinzenal: { periodo: string; quantidade: number }[] = [];
 
 // ===== COMPONENTE: Gráfico de Estoque de Animais =====
 // Gráfico de linha com toggle entre visualização mensal e quinzenal
@@ -92,19 +71,14 @@ const DashboardPage = () => {
 
   // Cards de estatísticas do rebanho — cada um com ícone personalizado
   const stats = [
-    { label: "Total de Animais", value: 1, img: rebanhoIcon },
+    { label: "Total de Animais", value: 0, img: rebanhoIcon },
     { label: "Matrizes", value: 0, img: vacaIcon },
-    { label: "Reprodutores", value: 1, img: touroIcon },
+    { label: "Reprodutores", value: 0, img: touroIcon },
     { label: "Nascimentos", value: 0, img: bezerroIcon },
   ];
 
   // Dados mockados de estoque de insumos para o gráfico de barras
-  const insumosData = [
-    { tipo: "Ração", quantidade: 120, valor: 4800 },
-    { tipo: "Vacina", quantidade: 85, valor: 3200 },
-    { tipo: "Medicamento", quantidade: 45, valor: 5400 },
-    { tipo: "Vermífugo", quantidade: 70, valor: 2800 },
-  ];
+  const insumosData: { tipo: string; quantidade: number; valor: number }[] = [];
 
   // Totalizadores calculados a partir dos dados de insumos
   const totalEstoque = insumosData.reduce((acc, item) => acc + item.valor, 0);   // Valor total em R$
@@ -128,7 +102,7 @@ const DashboardPage = () => {
         </div>
         <div>
           <p className="text-primary-foreground/70 text-sm">Propriedade</p>
-          <p className="text-primary-foreground text-xl font-bold">Fazenda Minas Gerais</p>
+          <p className="text-primary-foreground text-xl font-bold">Minha Propriedade</p>
         </div>
       </div>
 
