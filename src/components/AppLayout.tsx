@@ -20,7 +20,6 @@ const navItems = [
 // Itens do menu secundário — funcionalidades complementares (em desenvolvimento)
 const secondaryItems = [
   { icon: TrendingUp, label: "Animais Vendidos", route: "/dashboard" },
-  { icon: Skull, label: "Animais Mortos", route: "/dashboard" },
   { icon: Edit, label: "Editar Cadastro", route: "/dashboard" },
   { icon: Lock, label: "Alterar Senha", route: "/dashboard" },
 ];
@@ -46,14 +45,14 @@ const AppLayout = ({ children, title }: AppLayoutProps) => {
 
         {/* Cabeçalho da sidebar: logo + nome do sistema */}
         <div className="p-5 border-b border-border flex items-center gap-3">
-          <img src={mascotImg} alt="Rebanho Fácil" className="w-10 h-10 rounded-full object-cover" />
+          <img src={mascotImg} alt="Rebanho Fácil" className="w-15 h-15 rounded-full object-cover" />
           <h1 className="text-lg font-extrabold text-primary tracking-wide">Easy Cattle</h1>
         </div>
 
-        {/* Informação da propriedade ativa — futuramente poderá ser dinâmico por usuário */}
+        {/* Informação da propriedade ativa — futuramente os os dados fornecidos no cadastroa aparecerão aqui */}
         <div className="px-5 py-3 border-b border-border bg-muted/50">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Propriedade</p>
-          <p className="text-sm font-bold text-foreground">Fazenda Minas Gerais</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Propriedade Ativa</p>
+          <p className="text-sm font-bold text-foreground">Propriedade</p>
         </div>
 
         {/* ===== NAVEGAÇÃO PRINCIPAL ===== */}
@@ -102,8 +101,7 @@ const AppLayout = ({ children, title }: AppLayoutProps) => {
               <User size={18} className="text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate">Guilherme Renovato</p>
-              <p className="text-[11px] text-muted-foreground truncate">guilherme@email.com</p>
+              <p className="text-sm font-semibold text-foreground truncate">Usuario logado</p>
             </div>
             {/* Botão logout: redireciona para a tela de login (rota raiz) */}
             <button onClick={() => navigate("/")} className="text-destructive hover:text-destructive/80 p-1">
