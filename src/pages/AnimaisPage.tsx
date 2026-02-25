@@ -11,9 +11,9 @@ import AppLayout from "@/components/AppLayout";
 
 // Categorias de animais com contadores — futuramente serão calculados a partir do banco
 const categories = [
-  { label: "Matrizes", count: 0, color: "text-primary", bgColor: "bg-primary/10" },
-  { label: "Reprodutores", count: 0, color: "text-accent", bgColor: "bg-accent/10" },
-  { label: "Nascimentos", count: 0, color: "text-success", bgColor: "bg-success/10" },
+  { label: "Matrizes", count: 0, color: "text-primary", bgColor: "bg-primary/10" },       // Vacas reprodutoras
+  { label: "Reprodutores", count: 1, color: "text-accent", bgColor: "bg-accent/10" },      // Touros para reprodução
+  { label: "Nascimentos", count: 0, color: "text-success", bgColor: "bg-success/10" },     // Bezerros nascidos na propriedade
 ];
 
 const AnimaisPage = () => {
