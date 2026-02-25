@@ -45,7 +45,7 @@ const AppLayout = ({ children, title }: AppLayoutProps) => {
 
         {/* Cabeçalho da sidebar: logo + nome do sistema */}
         <div className="p-5 border-b border-border flex items-center gap-3">
-          <img src={mascotImg} alt="Rebanho Fácil" className="w-15 h-15 rounded-full object-cover" />
+          <img src={mascotImg} alt="Rebanho Fácil" className="w-10 h-10 rounded-full object-cover" />
           <h1 className="text-lg font-extrabold text-primary tracking-wide">Easy Cattle</h1>
         </div>
 
