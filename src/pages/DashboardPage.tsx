@@ -16,6 +16,8 @@ import rebanhoIcon from "@/assets/rebanho.png";
 import vacaIcon from "@/assets/vaca.png";
 import touroIcon from "@/assets/touro.png";
 import bezerroIcon from "@/assets/bezerro.png";
+import GraficoRoscaInsumos from "@/components/GraficoRoscaInsumos";
+
 
 const animaisMensal: { periodo: string; quantidade: number }[] = [];
 const animaisQuinzenal: { periodo: string; quantidade: number }[] = [];
@@ -153,6 +155,7 @@ const DashboardPage = () => {
         </div>
 
         <AnimaisChart />
+        <GraficoRoscaInsumos />
       </div>
 
       {/* Ações rápidas */}

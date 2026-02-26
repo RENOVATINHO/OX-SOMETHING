@@ -15,15 +15,17 @@ import DashboardPage from "./pages/DashboardPage";
 import AnimaisPage from "./pages/AnimaisPage";
 import NovoAnimalPage from "./pages/NovoAnimalPage";
 import NovaCompraAnimaisPage from "./pages/NovaCompraAnimaisPage";
-import NovaCompraInsumosPage from "./pages/NovaCompraInsumosPage";
 import RelatoriosPage from "./pages/RelatoriosPage";
 import ComprasAnimaisListPage from "./pages/ComprasAnimaisListPage";
-import ComprasInsumosListPage from "./pages/ComprasInsumosListPage";
 import CadastrosPage from "./pages/CadastrosPage";
 import NovoVendedorPage from "./pages/NovoVendedorPage";
 import NovoPastoPage from "./pages/NovoPastoPage";
 import NotFound from "./pages/NotFound";
 import CadastrarSePage from "./pages/CadastrarSePage";
+import EditarCadastroPage from "./pages/EditarCadastroPage";
+import InsumosPage from "./pages/InsumosPage";
+import NovoInsumoPage from "./pages/NovoInsumoPage";
+import EstoqueInsumosPage from "./pages/EstoqueInsumosPage";
 
 const queryClient = new QueryClient();
 
@@ -45,9 +47,11 @@ const App = () => (
             <Route path="/cadastros/novo-pasto" element={<NovoPastoPage />} />
             <Route path="/compras-animais" element={<ComprasAnimaisListPage />} />
             <Route path="/compras-animais/nova" element={<NovaCompraAnimaisPage />} />
-            <Route path="/compras-insumos" element={<ComprasInsumosListPage />} />
-            <Route path="/compras-insumos/nova" element={<NovaCompraInsumosPage />} />
             <Route path="/relatorios" element={<RelatoriosPage />} />
+            <Route path="/insumos/novo" element={<NovoInsumoPage />} />
+            <Route path="/insumos" element={<InsumosPage />} />
+            <Route path="/insumos/estoque" element={<EstoqueInsumosPage />} />
+            <Route path="/editar-cadastro" element={<EditarCadastroPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
