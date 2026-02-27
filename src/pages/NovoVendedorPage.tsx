@@ -1,173 +1,75 @@
 // ==============================
-// NovoVendedorPage.tsx — Formulário para cadastrar um novo vendedor/empresa
-// O vendedor cadastrado aqui aparece como opção de seleção nas páginas de compra de animais e insumos
-// Suporta dois tipos: "empresa" (CNPJ) e "pessoa" (CPF)
+// NovoVendedorPage.tsx — Cadastro de vendedor
 // ==============================
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { User, FileText, Phone, MapPin } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 
 const NovoVendedorPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false); // Controle de carregamento durante o submit
+  const [nome, setNome] = useState("");
+  const [documento, setDocumento] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [cidade, setCidade] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Estado do formulário — "tipo" determina labels dinâmicos (empresa vs pessoa física)
-  const [form, setForm] = useState({
-    nome: "",                                    // Nome da empresa ou pessoa
-    tipo: "empresa" as "empresa" | "pessoa",     // Tipo de vendedor: empresa ou pessoa física
-    documento: "",                               // CNPJ (empresa) ou CPF (pessoa)
-    cidade: "",                                  // Cidade do vendedor (opcional)
-    estado: "",                                  // Estado/UF do vendedor (opcional)
-    telefone: "",                                // Telefone de contato (opcional)
-  });
-
-  // Função genérica para atualizar qualquer campo do formulário
-  const update = (field: string, value: string) =>
-    setForm((prev) => ({ ...prev, [field]: value }));
-
-  // Handler de submit: valida nome obrigatório e insere no banco de dados
-  const handleSubmit = async () => {
-    if (!form.nome.trim()) {
-      toast({ title: "Erro", description: "Nome é obrigatório", variant: "destructive" });
-      return;
-    }
-
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (!nome) { setError("Informe o nome do vendedor."); return; }
     setLoading(true);
-
-    // Insere o vendedor na tabela "vendedores" — campos opcionais são salvos como null se vazios
-    const { error } = await supabase.from("vendedores").insert({
-      nome: form.nome.trim(),
-      tipo: form.tipo,
-      documento: form.documento.trim() || null,
-      cidade: form.cidade.trim() || null,
-      estado: form.estado.trim() || null,
-      telefone: form.telefone.trim() || null,
-    });
-
-    setLoading(false);
-
-    if (error) {
-      toast({ title: "Erro ao cadastrar", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Vendedor cadastrado com sucesso!" });
-      navigate("/cadastros"); // Volta para o hub de cadastros
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch("http://localhost:3001/api/vendedores", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ nome, documento, telefone, cidade }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || "Erro ao cadastrar."); return; }
+      navigate("/cadastros");
+    } catch {
+      setError("Não foi possível conectar ao servidor.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Classes CSS reutilizáveis para campos de formulário
-  const fieldClass =
-    "w-full bg-background border border-border rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors";
-  const labelClass = "text-sm font-semibold text-foreground mb-1.5 block";
-
   return (
     <AppLayout title="Novo Vendedor">
-      <div className="max-w-2xl">
-        <div className="bg-card rounded-xl border border-border p-6 space-y-5">
-
-          {/* ===== SELEÇÃO DE TIPO: EMPRESA OU PESSOA FÍSICA ===== */}
-          {/* Altera dinamicamente os labels e placeholders dos campos abaixo */}
-          <div>
-            <label className={labelClass}>Tipo *</label>
-            <div className="flex gap-3">
-              {(["empresa", "pessoa"] as const).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => update("tipo", t)}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold border transition-colors ${
-                    form.tipo === t
-                      ? "bg-primary text-primary-foreground border-primary"   // Botão ativo
-                      : "bg-background border-border text-foreground hover:bg-muted" // Botão inativo
-                  }`}
-                >
-                  {t === "empresa" ? "Empresa" : "Pessoa Física"}
-                </button>
-              ))}
+      <div className="max-w-lg">
+        <div className="bg-card rounded-2xl border border-border p-8">
+          <h2 className="text-xl font-bold text-foreground mb-6">Cadastrar vendedor</h2>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="flex items-center bg-background rounded-lg border border-border px-4 py-3">
+              <input type="text" placeholder="Nome *" value={nome} onChange={(e) => setNome(e.target.value)} required
+                className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-sm" />
+              <User size={18} className="text-muted-foreground" />
             </div>
-          </div>
-
-          {/* ===== NOME ===== */}
-          {/* Label e placeholder mudam conforme o tipo selecionado */}
-          <div>
-            <label className={labelClass}>
-              {form.tipo === "empresa" ? "Nome da Empresa" : "Nome da Pessoa"} *
-            </label>
-            <input
-              placeholder={form.tipo === "empresa" ? "Razão social" : "Nome completo"}
-              value={form.nome}
-              onChange={(e) => update("nome", e.target.value)}
-              className={fieldClass}
-            />
-          </div>
-
-          {/* ===== DOCUMENTO (CNPJ OU CPF) ===== */}
-          {/* O placeholder muda conforme o tipo para orientar o formato correto */}
-          <div>
-            <label className={labelClass}>
-              {form.tipo === "empresa" ? "CNPJ" : "CPF"}
-            </label>
-            <input
-              placeholder={form.tipo === "empresa" ? "00.000.000/0000-00" : "000.000.000-00"}
-              value={form.documento}
-              onChange={(e) => update("documento", e.target.value)}
-              className={fieldClass}
-            />
-          </div>
-
-          {/* ===== CIDADE E ESTADO (OPCIONAIS) ===== */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div>
-              <label className={labelClass}>Cidade</label>
-              <input
-                placeholder="Cidade"
-                value={form.cidade}
-                onChange={(e) => update("cidade", e.target.value)}
-                className={fieldClass}
-              />
+            <div className="flex items-center bg-background rounded-lg border border-border px-4 py-3">
+              <input type="text" placeholder="CPF / CNPJ" value={documento} onChange={(e) => setDocumento(e.target.value)}
+                className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-sm" />
+              <FileText size={18} className="text-muted-foreground" />
             </div>
-            <div>
-              <label className={labelClass}>Estado</label>
-              <input
-                placeholder="UF"
-                value={form.estado}
-                onChange={(e) => update("estado", e.target.value)}
-                className={fieldClass}
-              />
+            <div className="flex items-center bg-background rounded-lg border border-border px-4 py-3">
+              <input type="text" placeholder="Telefone" value={telefone} onChange={(e) => setTelefone(e.target.value)}
+                className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-sm" />
+              <Phone size={18} className="text-muted-foreground" />
             </div>
-          </div>
-
-          {/* ===== TELEFONE (OPCIONAL) ===== */}
-          <div>
-            <label className={labelClass}>Telefone</label>
-            <input
-              placeholder="(00) 00000-0000"
-              value={form.telefone}
-              onChange={(e) => update("telefone", e.target.value)}
-              className={fieldClass}
-            />
-          </div>
-        </div>
-
-        {/* ===== BOTÕES DE AÇÃO ===== */}
-        <div className="flex gap-3 mt-6">
-          <button
-            type="button"
-            onClick={() => navigate("/cadastros")}
-            className="px-6 py-3 rounded-lg border border-border text-foreground font-semibold hover:bg-muted transition-colors text-sm"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="bg-primary text-primary-foreground rounded-lg px-8 py-3 text-sm font-bold hover:bg-accent transition-colors disabled:opacity-50"
-          >
-            {loading ? "Salvando..." : "Cadastrar vendedor"}
-          </button>
+            <div className="flex items-center bg-background rounded-lg border border-border px-4 py-3">
+              <input type="text" placeholder="Cidade" value={cidade} onChange={(e) => setCidade(e.target.value)}
+                className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-sm" />
+              <MapPin size={18} className="text-muted-foreground" />
+            </div>
+            {error && <p className="text-sm text-destructive text-center">{error}</p>}
+            <button type="submit" disabled={loading}
+              className="w-full bg-primary text-primary-foreground rounded-lg py-3 text-base font-bold hover:bg-accent transition-colors disabled:opacity-60 mt-2">
+              {loading ? "Cadastrando..." : "Cadastrar vendedor"}
+            </button>
+          </form>
         </div>
       </div>
     </AppLayout>
