@@ -31,7 +31,7 @@ const ComprasAnimaisListPage = () => {
 
           {/* Botão para navegar ao formulário de nova compra de animal */}
           <button
-            onClick={() => navigate("/compras-animais/nova")}
+            onClick={() => navigate("/animais/nova-compra")}
             className="bg-primary text-primary-foreground rounded-lg px-5 py-2.5 text-sm font-bold hover:bg-accent transition-colors flex items-center gap-2"
           >
             <Plus size={16} />

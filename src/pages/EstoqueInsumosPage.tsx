@@ -82,7 +82,7 @@ const EstoqueInsumosPage = () => {
   const [loadingModal, setLoadingModal] = useState(false);
 
   const carregarDados = async () => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("easy_cattle_token");
     try {
       const [resInsumos, resDash] = await Promise.all([
         fetch("http://localhost:3001/api/insumos", { headers: { Authorization: `Bearer ${token}` } }),
@@ -117,7 +117,7 @@ const EstoqueInsumosPage = () => {
       return;
     }
     setLoadingModal(true);
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("easy_cattle_token");
     try {
       const body: Record<string, unknown> = { quantidade: Number(quantidade), observacao };
       if (modalTipo === "entrada") body.valor_unitario = Number(valor);

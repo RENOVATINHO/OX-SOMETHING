@@ -28,7 +28,7 @@ const DashboardPage = () => {
   const [animalStats, setAnimalStats] = useState<AnimalStats>({ total: 0, matrizes: 0, reprodutores: 0, bezerros: 0 });
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("easy_cattle_token");
     fetch("http://localhost:3001/api/animais/stats", {
       headers: { Authorization: `Bearer ${token}` },
     })

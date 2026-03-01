@@ -46,7 +46,7 @@ const AppLayout = ({ children, title }: AppLayoutProps) => {
 
   const handleLimparBanco = async () => {
     setLoadingLimpar(true);
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("easy_cattle_token");
     try {
       const res = await fetch("http://localhost:3001/api/dev/limpar-tudo", {
         method: "DELETE",

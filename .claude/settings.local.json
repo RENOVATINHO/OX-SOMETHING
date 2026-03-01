@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mysql -u root -p123456 -e \"DESCRIBE easy_cattle.vendedores;\")"
+    ]
+  }
+}

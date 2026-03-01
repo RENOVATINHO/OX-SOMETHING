@@ -29,7 +29,7 @@ const EditarCadastroPage = () => {
   // Carrega os dados atuais do usuário ao entrar na página
   useEffect(() => {
     const carregarDados = async () => {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("easy_cattle_token");
       if (!token) return navigate("/");
 
       try {
@@ -73,7 +73,7 @@ const EditarCadastroPage = () => {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("easy_cattle_token");
       const response = await fetch("http://localhost:3001/api/usuario", {
         method: "PUT",
         headers: {

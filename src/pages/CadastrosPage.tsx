@@ -8,7 +8,7 @@ import AppLayout from "@/components/AppLayout";
 const options = [
   { icon: UserPlus, label: "Novo Vendedor", desc: "Cadastrar um novo vendedor", route: "/cadastros/novo-vendedor" },
   { icon: Package, label: "Novos Insumos", desc: "Cadastrar e gerenciar insumos", route: "/insumos" },
-  { icon: PawPrint, label: "Novos Animais", desc: "Registrar compra de animais", route: "/compras-animais/nova" },
+  { icon: PawPrint, label: "Novos Animais", desc: "Registrar compra de animais", route: "/animais/nova-compra" },
   { icon: DollarSign, label: "Nova Venda", desc: "Registrar uma nova venda", route: "/cadastros/nova-venda" },
   { icon: Fence, label: "Novo Pasto", desc: "Cadastrar um novo pasto", route: "/cadastros/novo-pasto" },
 ];

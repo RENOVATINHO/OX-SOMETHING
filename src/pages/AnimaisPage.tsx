@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Pencil, PawPrint, DollarSign, Skull, Plus } from "lucide-react";
+import { Search, Pencil, PawPrint, DollarSign, Skull, Plus, TrendingUp } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import AppLayout from "@/components/AppLayout";
 
 interface Animal {
@@ -27,7 +28,7 @@ interface Animal {
 
 const sexoLabel: Record<string, string> = {
   macho_inteiro: "Macho Inteiro",
-  macho_capado: "Macho Capado",
+  macho_capado: "Boi",
   femea: "Fêmea",
 };
 
@@ -47,16 +48,57 @@ const statusCores: Record<string, string> = {
 const filtrarPorAba = (animais: Animal[], aba: string) => {
   const ativos = animais.filter(a => a.status === "ativo");
   switch (aba) {
-    case "touros":   return ativos.filter(a => a.sexo === "macho_inteiro");
-    case "mi":       return ativos.filter(a => a.sexo === "macho_inteiro" && a.faixa_etaria !== "adulto");
-    case "mc":       return ativos.filter(a => a.sexo === "macho_capado");
-    case "matrizes": return ativos.filter(a => a.sexo === "femea" && a.faixa_etaria === "adulto");
-    case "novilhas": return ativos.filter(a => a.sexo === "femea" && ["garrote","novilho"].includes(a.faixa_etaria));
-    case "bezerras": return ativos.filter(a => a.sexo === "femea" && a.faixa_etaria === "bezerro");
-    default:         return animais;
+    case "reprodutores": return ativos.filter(a => a.sexo === "macho_inteiro" && a.faixa_etaria === "adulto" && a.tipo_cadastro === "especial");
+    case "garrotes":     return ativos.filter(a => a.sexo === "macho_inteiro" && a.faixa_etaria !== "adulto");
+    case "bois":         return ativos.filter(a => a.sexo === "macho_capado");
+    case "matrizes":     return ativos.filter(a => a.sexo === "femea" && a.faixa_etaria === "adulto");
+    case "novilhas":     return ativos.filter(a => a.sexo === "femea" && ["garrote", "novilho"].includes(a.faixa_etaria));
+    case "bezerras":     return ativos.filter(a => a.sexo === "femea" && a.faixa_etaria === "bezerro");
+    default:             return animais;
   }
 };
 
+// ── Gráfico de pizza customizado ──────────────────────────────────────────────
+const RADIAN = Math.PI / 180;
+const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+  if (percent < 0.05) return null;
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.55;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  return (
+    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={700}>
+      {`${(percent * 100).toFixed(0)}%`}
+    </text>
+  );
+};
+
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-card border border-border rounded-lg px-3 py-2 shadow-lg text-sm">
+        <p className="font-bold text-foreground">{payload[0].name}</p>
+        <p className="text-muted-foreground">{payload[0].value} animais</p>
+      </div>
+    );
+  }
+  return null;
+};
+
+const CustomTooltipValor = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-card border border-border rounded-lg px-3 py-2 shadow-lg text-sm">
+        <p className="font-bold text-foreground">{payload[0].name}</p>
+        <p className="text-muted-foreground">
+          {payload[0].value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+// ── Tabela ────────────────────────────────────────────────────────────────────
 const TabelaAnimais = ({ animais, search, onEditar, onVenda, onMorte }: {
   animais: Animal[]; search: string;
   onEditar: (a: Animal) => void; onVenda: (a: Animal) => void; onMorte: (a: Animal) => void;
@@ -131,11 +173,13 @@ const TabelaAnimais = ({ animais, search, onEditar, onVenda, onMorte }: {
   );
 };
 
+// ── Page ──────────────────────────────────────────────────────────────────────
 const AnimaisPage = () => {
   const navigate = useNavigate();
   const [animais, setAnimais] = useState<Animal[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [showDashboard, setShowDashboard] = useState(false);
 
   const [modalEditar, setModalEditar] = useState(false);
   const [animalSel, setAnimalSel] = useState<Animal | null>(null);
@@ -160,7 +204,7 @@ const AnimaisPage = () => {
   const [erroMorte, setErroMorte] = useState("");
   const [loadingMorte, setLoadingMorte] = useState(false);
 
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("easy_cattle_token");
 
   const carregarAnimais = async () => {
     try {
@@ -227,17 +271,49 @@ const AnimaisPage = () => {
   };
 
   const ativos = animais.filter(a => a.status === "ativo");
+
   const cnt = {
-    touros:   filtrarPorAba(animais, "touros").length,
-    mi:       filtrarPorAba(animais, "mi").length,
-    mc:       filtrarPorAba(animais, "mc").length,
-    matrizes: filtrarPorAba(animais, "matrizes").length,
-    novilhas: filtrarPorAba(animais, "novilhas").length,
-    bezerras: filtrarPorAba(animais, "bezerras").length,
+    reprodutores: filtrarPorAba(animais, "reprodutores").length,
+    garrotes:     filtrarPorAba(animais, "garrotes").length,
+    bois:         filtrarPorAba(animais, "bois").length,
+    matrizes:     filtrarPorAba(animais, "matrizes").length,
+    novilhas:     filtrarPorAba(animais, "novilhas").length,
+    bezerras:     filtrarPorAba(animais, "bezerras").length,
   };
 
+  // ── Dados para os gráficos ────────────────────────────────────────────────
+  const CORES_PIZZA = ["#f59e0b", "#f97316", "#84cc16", "#ec4899", "#a78bfa", "#38bdf8"];
+
+  const dadosPizza = [
+    { name: "Reprodutores", value: cnt.reprodutores },
+    { name: "Garrotes",     value: cnt.garrotes },
+    { name: "Bois",         value: cnt.bois },
+    { name: "Matrizes",     value: cnt.matrizes },
+    { name: "Novilhas",     value: cnt.novilhas },
+    { name: "Bezerras",     value: cnt.bezerras },
+  ].filter(d => d.value > 0);
+
+  // Valor estimado por categoria (peso_entrada * valor_kg da compra)
+  const calcularValorCategoria = (lista: Animal[]) =>
+    lista.reduce((acc, a) => {
+      const peso = a.peso_entrada || 0;
+      const valorKg = a.valor_kg || 0;
+      return acc + peso * valorKg;
+    }, 0);
+
+  const dadosValor = [
+    { name: "Reprodutores", value: calcularValorCategoria(filtrarPorAba(animais, "reprodutores")) },
+    { name: "Garrotes",     value: calcularValorCategoria(filtrarPorAba(animais, "garrotes")) },
+    { name: "Bois",         value: calcularValorCategoria(filtrarPorAba(animais, "bois")) },
+    { name: "Matrizes",     value: calcularValorCategoria(filtrarPorAba(animais, "matrizes")) },
+    { name: "Novilhas",     value: calcularValorCategoria(filtrarPorAba(animais, "novilhas")) },
+    { name: "Bezerras",     value: calcularValorCategoria(filtrarPorAba(animais, "bezerras")) },
+  ].filter(d => d.value > 0);
+
+  const valorTotalRebanho = dadosValor.reduce((acc, d) => acc + d.value, 0);
+
   return (
-    <AppLayout title="Animais">
+    <AppLayout title="Rebanho">
       <div className="max-w-7xl">
 
         {/* Barra de busca + botões */}
@@ -248,13 +324,18 @@ const AnimaisPage = () => {
               onChange={(e) => setSearch(e.target.value)}
               className="flex-1 bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground" />
           </div>
+          <button
+            onClick={() => setShowDashboard(v => !v)}
+            className={`rounded-lg px-4 py-3 text-sm font-bold transition-colors flex items-center gap-2 border ${showDashboard ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-foreground hover:bg-muted"}`}>
+            <TrendingUp size={15} /> Dashboard
+          </button>
           <button onClick={() => navigate("/animais/nova-compra")}
             className="bg-primary text-primary-foreground rounded-lg px-4 py-3 text-sm font-bold hover:bg-accent transition-colors flex items-center gap-2">
             <Plus size={15} /> Nova Compra
           </button>
           <button onClick={() => navigate("/animais/cadastro-especial?sexo=macho_inteiro")}
             className="bg-amber-600 text-white rounded-lg px-4 py-3 text-sm font-bold hover:bg-amber-700 transition-colors flex items-center gap-2">
-            <Plus size={15} /> 🐂 Touro
+            <Plus size={15} /> 🐂 Reprodutor
           </button>
           <button onClick={() => navigate("/animais/cadastro-especial?sexo=femea")}
             className="bg-pink-600 text-white rounded-lg px-4 py-3 text-sm font-bold hover:bg-pink-700 transition-colors flex items-center gap-2">
@@ -262,29 +343,29 @@ const AnimaisPage = () => {
           </button>
         </div>
 
-        {/* Cards — retângulo total + grid 2x3 */}
+        {/* Cards — Total do Rebanho + grid 2x3 */}
         <div className="flex gap-4 mb-6 items-stretch">
           <div className="bg-card border border-border rounded-xl w-44 flex-shrink-0 flex flex-col items-center justify-center gap-2 py-6 px-4">
-            <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider text-center">Total Ativo</p>
+            <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider text-center">Total do Rebanho</p>
             <p className="text-6xl font-black text-primary leading-none">{ativos.length}</p>
             <p className="text-xs text-muted-foreground">animais</p>
           </div>
 
           <div className="flex-1 grid grid-cols-3 grid-rows-2 gap-3">
             <div className="bg-card border border-border rounded-xl p-4">
-              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Touros</p>
-              <p className="text-3xl font-black text-amber-500">{cnt.touros}</p>
+              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Reprodutores</p>
+              <p className="text-3xl font-black text-amber-500">{cnt.reprodutores}</p>
               <p className="text-xs text-muted-foreground mt-1">Macho inteiro adulto</p>
             </div>
             <div className="bg-card border border-border rounded-xl p-4">
-              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">M. Inteiro Jovem</p>
-              <p className="text-3xl font-black text-amber-500">{cnt.mi}</p>
-              <p className="text-xs text-muted-foreground mt-1">Bezerro/Garrote/Novilho</p>
+              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Garrotes</p>
+              <p className="text-3xl font-black text-amber-500">{cnt.garrotes}</p>
+              <p className="text-xs text-muted-foreground mt-1">Inteiros jovens</p>
             </div>
             <div className="bg-card border border-border rounded-xl p-4">
-              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Macho Castrado</p>
-              <p className="text-3xl font-black text-amber-500">{cnt.mc}</p>
-              <p className="text-xs text-muted-foreground mt-1">Capados</p>
+              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Bois</p>
+              <p className="text-3xl font-black text-amber-500">{cnt.bois}</p>
+              <p className="text-xs text-muted-foreground mt-1">Machos castrados</p>
             </div>
             <div className="bg-card border border-border rounded-xl p-4">
               <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Matrizes</p>
@@ -304,6 +385,89 @@ const AnimaisPage = () => {
           </div>
         </div>
 
+        {/* Dashboard em pizza — aparece ao clicar no botão */}
+        {showDashboard && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+
+            {/* Pizza — Quantidade */}
+            <div className="bg-card border border-border rounded-xl p-6">
+              <div className="mb-4">
+                <p className="text-sm font-bold text-foreground">Composição do Rebanho</p>
+                <p className="text-xs text-muted-foreground">Distribuição por categoria (ativos)</p>
+              </div>
+              {dadosPizza.length > 0 ? (
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart>
+                    <Pie
+                      data={dadosPizza}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={renderCustomLabel}
+                      outerRadius={100}
+                      dataKey="value"
+                    >
+                      {dadosPizza.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={CORES_PIZZA[index % CORES_PIZZA.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend
+                      formatter={(value) => <span className="text-xs text-foreground">{value}</span>}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[260px] text-muted-foreground text-sm">
+                  Nenhum animal ativo cadastrado.
+                </div>
+              )}
+            </div>
+
+            {/* Pizza — Valor */}
+            <div className="bg-card border border-border rounded-xl p-6">
+              <div className="mb-4">
+                <p className="text-sm font-bold text-foreground">Valor Estimado do Rebanho</p>
+                <p className="text-xs text-muted-foreground">
+                  Baseado em peso de entrada × valor/kg da compra
+                  {valorTotalRebanho > 0 && (
+                    <span className="ml-2 font-bold text-primary">
+                      Total: {valorTotalRebanho.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                    </span>
+                  )}
+                </p>
+              </div>
+              {dadosValor.length > 0 ? (
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart>
+                    <Pie
+                      data={dadosValor}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={renderCustomLabel}
+                      outerRadius={100}
+                      dataKey="value"
+                    >
+                      {dadosValor.map((_, index) => (
+                        <Cell key={`cell-v-${index}`} fill={CORES_PIZZA[index % CORES_PIZZA.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomTooltipValor />} />
+                    <Legend
+                      formatter={(value) => <span className="text-xs text-foreground">{value}</span>}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[260px] text-muted-foreground text-sm">
+                  Cadastre peso e valor/kg para visualizar.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Tabela com abas */}
         {loading ? (
           <div className="bg-card rounded-xl border border-border p-12 text-center">
@@ -314,14 +478,14 @@ const AnimaisPage = () => {
             <Tabs defaultValue="todos">
               <TabsList className="mb-6 flex-wrap h-auto gap-1">
                 <TabsTrigger value="todos">Todos ({animais.length})</TabsTrigger>
-                <TabsTrigger value="touros">Touros ({cnt.touros})</TabsTrigger>
-                <TabsTrigger value="mi">M. Inteiro ({cnt.mi})</TabsTrigger>
-                <TabsTrigger value="mc">M. Castrado ({cnt.mc})</TabsTrigger>
+                <TabsTrigger value="reprodutores">Reprodutores ({cnt.reprodutores})</TabsTrigger>
+                <TabsTrigger value="garrotes">Garrotes ({cnt.garrotes})</TabsTrigger>
+                <TabsTrigger value="bois">Bois ({cnt.bois})</TabsTrigger>
                 <TabsTrigger value="matrizes">Matrizes ({cnt.matrizes})</TabsTrigger>
                 <TabsTrigger value="novilhas">Novilhas ({cnt.novilhas})</TabsTrigger>
                 <TabsTrigger value="bezerras">Bezerras ({cnt.bezerras})</TabsTrigger>
               </TabsList>
-              {["todos","touros","mi","mc","matrizes","novilhas","bezerras"].map(aba => (
+              {["todos", "reprodutores", "garrotes", "bois", "matrizes", "novilhas", "bezerras"].map(aba => (
                 <TabsContent key={aba} value={aba}>
                   <TabelaAnimais
                     animais={filtrarPorAba(animais, aba)}

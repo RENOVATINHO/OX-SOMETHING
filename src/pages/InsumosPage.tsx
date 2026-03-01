@@ -61,7 +61,7 @@ const InsumosPage = () => {
   const [erroCategoria, setErroCategoria] = useState("");
   const [loadingCategoria, setLoadingCategoria] = useState(false);
 
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("easy_cattle_token");
 
   const carregarDados = async () => {
     try {

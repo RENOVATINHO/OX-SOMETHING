@@ -37,9 +37,7 @@ const LoginPage = () => {
         return;
       }
 
-      // Salva token e dados do usuário
-      localStorage.setItem("token", data.token);
-      login({ nome: data.nome, nomePropriedade: data.nomePropriedade });
+      login({ nome: data.nome, nomePropriedade: data.nomePropriedade }, data.token);
 
       navigate("/dashboard");
     } catch (err) {

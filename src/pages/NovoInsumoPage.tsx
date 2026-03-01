@@ -28,7 +28,7 @@ const NovoInsumoPage = () => {
     }
 
     setLoading(true);
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("easy_cattle_token");
 
     try {
       const res = await fetch("http://localhost:3001/api/insumos", {

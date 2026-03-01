@@ -28,7 +28,7 @@ const GraficoRoscaInsumos = () => {
 
   useEffect(() => {
     const carregar = async () => {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("easy_cattle_token");
       try {
         const res = await fetch("http://localhost:3001/api/insumos/dashboard", {
           headers: { Authorization: `Bearer ${token}` },

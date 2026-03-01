@@ -20,7 +20,7 @@ const NovaCompraEspecialPage = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("easy_cattle_token");
   const isTouro = sexoFixo === "macho_inteiro";
   const titulo = isTouro ? "Cadastrar Touro" : "Cadastrar Matriz";
 

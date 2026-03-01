@@ -21,7 +21,7 @@ const NovoVendedorPage = () => {
     setError("");
     if (!nome) { setError("Informe o nome do vendedor."); return; }
     setLoading(true);
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("easy_cattle_token");
     try {
       const res = await fetch("http://localhost:3001/api/vendedores", {
         method: "POST",
