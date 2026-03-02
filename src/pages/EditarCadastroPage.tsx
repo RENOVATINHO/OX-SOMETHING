@@ -101,7 +101,7 @@ const EditarCadastroPage = () => {
       }
 
       // Atualiza o contexto com os novos dados
-      login({ nome, nomePropriedade }, token || "");
+      login({ nome, nomePropriedade });
       setSuccess("Cadastro atualizado com sucesso!");
       setPasswordAtual("");
       setPasswordNova("");
