@@ -1,19 +1,28 @@
 // ==============================
-// GraficoRoscaInsumos.tsx — Componente reutilizável do gráfico de rosca
-// Use este componente no DashboardPage
+// GraficoRoscaInsumos.tsx — Gráfico de rosca do valor total em estoque por categoria
+//
+// Componente isolado e reutilizável usado no DashboardPage.
+// Busca os dados diretamente do endpoint /api/insumos/dashboard e exibe:
+//   • Gráfico de rosca com as 3 categorias (alimentacao, saude, solo_pasto)
+//   • Lista de totais por categoria abaixo do gráfico
+//   • Total geral em destaque
+//
+// Apenas categorias com valor > 0 são exibidas (evita fatias invisíveis na rosca).
 // ==============================
 
 import { useState, useEffect } from "react";
 import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from "recharts";
 
+// Paleta de cores — deve ser idêntica à do EstoqueInsumosPage para consistência visual
 const CORES = {
-  alimentacao: "hsl(45 90% 50%)",
-  saude: "hsl(0 70% 55%)",
-  solo_pasto: "hsl(160 60% 45%)",
+  alimentacao: "hsl(45 90% 50%)",  // âmbar
+  saude: "hsl(0 70% 55%)",          // vermelho
+  solo_pasto: "hsl(160 60% 45%)",   // verde
 };
 
+// Tipos mínimos necessários para calcular o valorTotal por categoria
 interface DashboardCategoria {
-  valorTotal: number;
+  valorTotal: number; // calculado pelo back-end: quantidade × valorUnitario
 }
 
 interface DashboardData {
@@ -23,6 +32,7 @@ interface DashboardData {
 }
 
 const GraficoRoscaInsumos = () => {
+  // Dados já transformados para o formato do recharts (com cor inclusa)
   const [dados, setDados] = useState<{ name: string; value: number; cor: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -35,6 +45,8 @@ const GraficoRoscaInsumos = () => {
         });
         const data: DashboardData = await res.json();
 
+        // Soma o valorTotal de todos os insumos de cada categoria
+        // e filtra as categorias sem valor (evita fatias com 0 na rosca)
         const rosca = [
           { name: "Alimentação", value: (data.alimentacao || []).reduce((acc, i) => acc + i.valorTotal, 0), cor: CORES.alimentacao },
           { name: "Saúde", value: (data.saude || []).reduce((acc, i) => acc + i.valorTotal, 0), cor: CORES.saude },

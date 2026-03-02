@@ -1,27 +1,54 @@
+// ==============================
+// NovaCompraAnimaisPage.tsx — Formulário de registro de nova compra de animais
+//
+// Responsabilidades:
+//   • Exibir o número sequencial da próxima compra (preview antes de confirmar)
+//   • Carregar a lista de vendedores cadastrados para seleção
+//   • Validar os campos obrigatórios antes de enviar
+//   • Criar a compra na API (POST /api/compras-animais)
+//   • O back-end cria automaticamente N animais individuais para essa compra
+//     (um registro por animal, com status "ativo" por padrão)
+//
+// Campos obrigatórios: vendedor, sexo, faixa_etaria, quantidade, data
+// Campos opcionais:  numero_gta, valor_kg, observacao
+// ==============================
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 
+// Tipo mínimo necessário para popular o select de vendedores
 interface Vendedor { id: number; nome: string; }
 
 const NovaCompraAnimaisPage = () => {
   const navigate = useNavigate();
-  const [vendedores, setVendedores] = useState<Vendedor[]>([]);
-  const [proximoNumero, setProximoNumero] = useState<string>("");
-  const [vendedorId, setVendedorId] = useState("");
-  const [numeroGta, setNumeroGta] = useState("");
-  const [sexo, setSexo] = useState("");
-  const [faixaEtaria, setFaixaEtaria] = useState("");
-  const [quantidade, setQuantidade] = useState("");
-  const [valorKg, setValorKg] = useState("");
-  const [data, setData] = useState(new Date().toISOString().split("T")[0]);
-  const [observacao, setObservacao] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
+  // Lista de vendedores cadastrados — carregada via API no mount
+  const [vendedores, setVendedores] = useState<Vendedor[]>([]);
+
+  // Número sequencial da próxima compra (ex: "0043") — apenas para exibição
+  const [proximoNumero, setProximoNumero] = useState<string>("");
+
+  // ── Campos do formulário ──────────────────────────────────────────────────
+  const [vendedorId, setVendedorId] = useState("");       // ID do vendedor selecionado
+  const [numeroGta, setNumeroGta] = useState("");          // Guia de Trânsito Animal (opcional)
+  const [sexo, setSexo] = useState("");                    // "macho_inteiro" | "macho_capado" | "femea"
+  const [faixaEtaria, setFaixaEtaria] = useState("");      // "bezerro" | "garrote" | "novilho" | "adulto"
+  const [quantidade, setQuantidade] = useState("");        // quantos animais desta compra
+  const [valorKg, setValorKg] = useState("");              // R$/kg (usado para estimar valor do rebanho)
+  const [data, setData] = useState(new Date().toISOString().split("T")[0]); // data padrão: hoje
+  const [observacao, setObservacao] = useState("");
+
+  // ── Controle de UI ────────────────────────────────────────────────────────
+  const [error, setError] = useState("");       // mensagem de erro para o usuário
+  const [loading, setLoading] = useState(false); // desabilita o botão enquanto salva
+
+  // Token JWT para autenticação nas chamadas à API
   const token = localStorage.getItem("easy_cattle_token");
 
+  // ── Carrega dados iniciais em paralelo ────────────────────────────────────
   useEffect(() => {
+    // Busca a lista de vendedores cadastrados pelo usuário logado
     fetch("http://localhost:3001/api/vendedores", {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -32,6 +59,7 @@ const NovaCompraAnimaisPage = () => {
       })
       .catch(() => setVendedores([]));
 
+    // Busca o próximo número sequencial disponível para exibir no preview
     fetch("http://localhost:3001/api/compras-animais/proximo-numero", {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -40,10 +68,12 @@ const NovaCompraAnimaisPage = () => {
       .catch(() => {});
   }, []);
 
+  // ── Submissão do formulário ───────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
+    // Validação client-side dos campos obrigatórios
     if (!vendedorId || !sexo || !faixaEtaria || !quantidade || !data) {
       setError("Preencha todos os campos obrigatórios.");
       return;
@@ -55,6 +85,7 @@ const NovaCompraAnimaisPage = () => {
 
     setLoading(true);
     try {
+      // Envia a compra para a API — o back-end cria a compra + N registros de animais
       const res = await fetch("http://localhost:3001/api/compras-animais", {
         method: "POST",
         headers: {
@@ -67,7 +98,7 @@ const NovaCompraAnimaisPage = () => {
           sexo,
           faixa_etaria: faixaEtaria,
           quantidade: Number(quantidade),
-          valor_kg: Number(valorKg) || 0,
+          valor_kg: Number(valorKg) || 0, // 0 quando não informado (sem estimativa de valor)
           data,
           observacao: observacao || null,
         }),
@@ -80,6 +111,7 @@ const NovaCompraAnimaisPage = () => {
         return;
       }
 
+      // Sucesso: redireciona para a lista de animais
       navigate("/animais");
     } catch {
       setError("Não foi possível conectar ao servidor.");
@@ -88,6 +120,7 @@ const NovaCompraAnimaisPage = () => {
     }
   };
 
+  // Classes CSS reutilizadas nos inputs/selects do formulário
   const fieldClass = "w-full bg-background border border-border rounded-lg px-4 py-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors";
   const labelClass = "text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1 block";
 
@@ -96,7 +129,10 @@ const NovaCompraAnimaisPage = () => {
       <div className="max-w-2xl">
         <div className="bg-card rounded-2xl border border-border p-8">
 
-          {/* Número da compra preview */}
+          {/* ── Preview do número da compra ─────────────────────────────────
+              Exibe o número sequencial reservado para esta compra.
+              Só aparece quando a API retornou o valor com sucesso.
+          ─────────────────────────────────────────────────────────────────── */}
           {proximoNumero && (
             <div className="flex items-center justify-between bg-muted/40 border border-border rounded-xl px-5 py-4 mb-6">
               <span className="text-sm text-muted-foreground font-semibold">Número desta compra</span>
@@ -104,7 +140,10 @@ const NovaCompraAnimaisPage = () => {
             </div>
           )}
 
-          {/* Aviso sem vendedores */}
+          {/* ── Aviso: nenhum vendedor cadastrado ───────────────────────────
+              Se o usuário ainda não tem vendedores, o formulário não pode ser
+              submetido. Exibe alerta com link direto para o cadastro.
+          ─────────────────────────────────────────────────────────────────── */}
           {vendedores.length === 0 && (
             <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-4 py-3 mb-4 text-sm text-yellow-700">
               Nenhum vendedor cadastrado.{" "}
@@ -119,7 +158,7 @@ const NovaCompraAnimaisPage = () => {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
-            {/* Vendedor */}
+            {/* ── Vendedor (obrigatório) ───────────────────────────────────── */}
             <div>
               <label className={labelClass}>Vendedor *</label>
               <select
@@ -129,13 +168,15 @@ const NovaCompraAnimaisPage = () => {
                 className={fieldClass}
               >
                 <option value="">Selecione o vendedor</option>
+                {/* Popula dinamicamente com os vendedores carregados no mount */}
                 {vendedores.map((v) => (
                   <option key={v.id} value={v.id}>{v.nome}</option>
                 ))}
               </select>
             </div>
 
-            {/* Número GTA */}
+            {/* ── Número GTA (opcional) ───────────────────────────────────── */}
+            {/* Guia de Trânsito Animal — documento fiscal obrigatório no transporte de bovinos */}
             <div>
               <label className={labelClass}>Número GTA</label>
               <input
@@ -147,7 +188,8 @@ const NovaCompraAnimaisPage = () => {
               />
             </div>
 
-            {/* Sexo + Faixa Etária */}
+            {/* ── Sexo + Faixa Etária (ambos obrigatórios) ─────────────────── */}
+            {/* Estes dois campos determinam em qual aba o animal aparecerá em AnimaisPage */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelClass}>Sexo *</label>
@@ -180,7 +222,9 @@ const NovaCompraAnimaisPage = () => {
               </div>
             </div>
 
-            {/* Quantidade + Valor/kg */}
+            {/* ── Quantidade + Valor por kg ─────────────────────────────────── */}
+            {/* Quantidade determina quantos registros de animais serão criados no banco */}
+            {/* Valor/kg é usado no gráfico "Valor Estimado do Rebanho" em AnimaisPage */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelClass}>Quantidade *</label>
@@ -208,7 +252,7 @@ const NovaCompraAnimaisPage = () => {
               </div>
             </div>
 
-            {/* Data */}
+            {/* ── Data da compra (obrigatória) ─────────────────────────────── */}
             <div>
               <label className={labelClass}>Data da compra *</label>
               <input
@@ -220,7 +264,7 @@ const NovaCompraAnimaisPage = () => {
               />
             </div>
 
-            {/* Observação */}
+            {/* ── Observação (opcional) ────────────────────────────────────── */}
             <div>
               <label className={labelClass}>Observação</label>
               <input
@@ -232,11 +276,14 @@ const NovaCompraAnimaisPage = () => {
               />
             </div>
 
+            {/* Mensagem de erro de validação ou da API */}
             {error && (
               <p className="text-sm text-destructive text-center font-semibold">{error}</p>
             )}
 
+            {/* ── Botões de ação ───────────────────────────────────────────── */}
             <div className="flex gap-3 mt-2">
+              {/* Cancelar: retorna para a lista de animais sem salvar */}
               <button
                 type="button"
                 onClick={() => navigate("/animais")}
@@ -244,6 +291,7 @@ const NovaCompraAnimaisPage = () => {
               >
                 Cancelar
               </button>
+              {/* Registrar compra: desabilitado durante o envio para evitar duplo clique */}
               <button
                 type="submit"
                 disabled={loading}

@@ -1,5 +1,15 @@
 // ==============================
-// InsumosPage.tsx — Listagem de insumos com nova categoria
+// InsumosPage.tsx — Cadastro e listagem de insumos
+//
+// Responsabilidades:
+//   • Listar todos os insumos cadastrados pelo usuário
+//   • Busca textual por nome + filtro por categoria (select dinâmico)
+//   • Modal de edição: nome, categoria, unidade e valor unitário
+//   • Modal de exclusão: com confirmação antes de deletar
+//   • Modal de nova categoria: cria categorias dinâmicas (slug gerado no back-end)
+//
+// Nota: o controle de estoque (entradas/saídas) fica em EstoqueInsumosPage.tsx
+// Esta página é focada no cadastro e manutenção do catálogo de insumos.
 // ==============================
 
 import { useState, useEffect } from "react";
@@ -7,21 +17,25 @@ import { useNavigate } from "react-router-dom";
 import { Search, Package, Pencil, Plus, Skull, Tag } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 
+// Representa um insumo cadastrado no sistema
 interface Insumo {
   id: number;
   nome: string;
-  categoria: string;
-  unidade: string;
-  valor_unitario: number;
-  quantidade_estoque: number;
+  categoria: string;          // slug da categoria (ex: "alimentacao", "saude")
+  unidade: string;            // ex: "kg", "L", "un", "sc" (saco), "cx" (caixa)
+  valor_unitario: number;     // preço de referência por unidade
+  quantidade_estoque: number; // quantidade atual em estoque
 }
 
+// Categoria de insumos — criadas dinamicamente pelo usuário
 interface Categoria {
   id: number;
-  nome: string;
-  slug: string;
+  nome: string; // nome exibível (ex: "Alimentação")
+  slug: string; // identificador slugificado (ex: "alimentacao") — chave FK nos insumos
 }
 
+// Paleta de cores para os badges de categoria na tabela
+// O índice da categoria na lista determina qual cor usar (cíclico — nunca estoura a paleta)
 const coresBadge = [
   "bg-yellow-100 text-yellow-800",
   "bg-red-100 text-red-800",
@@ -34,13 +48,18 @@ const coresBadge = [
 
 const InsumosPage = () => {
   const navigate = useNavigate();
+
+  // Dados carregados da API
   const [insumos, setInsumos] = useState<Insumo[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [search, setSearch] = useState("");
-  const [filtroCategoria, setFiltroCategoria] = useState("todos");
+
+  // Controles de busca e filtro
+  const [search, setSearch] = useState("");                // busca por nome do insumo
+  const [filtroCategoria, setFiltroCategoria] = useState("todos"); // slug da categoria selecionada no select
+
   const [loading, setLoading] = useState(true);
 
-  // Modal editar
+  // ── Estado do modal de edição de insumo ───────────────────────────────────
   const [modalEditar, setModalEditar] = useState(false);
   const [insumoSelecionado, setInsumoSelecionado] = useState<Insumo | null>(null);
   const [editNome, setEditNome] = useState("");
@@ -50,19 +69,21 @@ const InsumosPage = () => {
   const [erroModal, setErroModal] = useState("");
   const [loadingModal, setLoadingModal] = useState(false);
 
-  // Modal excluir
+  // ── Estado do modal de exclusão de insumo ─────────────────────────────────
   const [modalExcluir, setModalExcluir] = useState(false);
   const [insumoParaExcluir, setInsumoParaExcluir] = useState<Insumo | null>(null);
   const [loadingExcluir, setLoadingExcluir] = useState(false);
 
-  // Modal nova categoria
+  // ── Estado do modal de criação de nova categoria ───────────────────────────
   const [modalCategoria, setModalCategoria] = useState(false);
   const [novaCategoriaNome, setNovaCategoriaNome] = useState("");
   const [erroCategoria, setErroCategoria] = useState("");
   const [loadingCategoria, setLoadingCategoria] = useState(false);
 
+  // Token JWT para autenticação
   const token = localStorage.getItem("easy_cattle_token");
 
+  // Carrega insumos e categorias em paralelo — ambas as listas precisam ser consistentes
   const carregarDados = async () => {
     try {
       const [resInsumos, resCats] = await Promise.all([
@@ -75,13 +96,17 @@ const InsumosPage = () => {
     finally { setLoading(false); }
   };
 
+  // Carrega os dados ao montar e após qualquer operação de criação/edição/exclusão
   useEffect(() => { carregarDados(); }, []);
 
+  // Retorna a classe CSS do badge baseado na posição da categoria na lista
+  // (garante cor consistente para a mesma categoria em toda a sessão)
   const getCorBadge = (slug: string) => {
     const idx = categorias.findIndex(c => c.slug === slug);
     return coresBadge[idx % coresBadge.length] || coresBadge[0];
   };
 
+  // Converte o slug da categoria para o nome legível (fallback: exibe o próprio slug)
   const getNomeCategoria = (slug: string) => {
     return categorias.find(c => c.slug === slug)?.nome || slug;
   };
@@ -144,6 +169,8 @@ const InsumosPage = () => {
     finally { setLoadingCategoria(false); }
   };
 
+  // Aplica busca textual + filtro de categoria simultaneamente
+  // Ambos os critérios devem ser satisfeitos (AND lógico)
   const insumosFiltrados = insumos.filter((i) => {
     const buscaOk = i.nome.toLowerCase().includes(search.toLowerCase());
     const categoriaOk = filtroCategoria === "todos" || i.categoria === filtroCategoria;

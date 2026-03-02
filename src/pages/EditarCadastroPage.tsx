@@ -1,5 +1,15 @@
 // ==============================
-// EditarCadastroPage.tsx — Página para editar dados do usuário logado
+// EditarCadastroPage.tsx — Edição de dados do usuário e da propriedade
+//
+// Fluxo:
+//   1. No mount, carrega os dados atuais via GET /api/usuario (autenticado)
+//   2. Usuário edita os campos e submete
+//   3. PUT /api/usuario atualiza nome, endereço, email e opcionalmente a senha
+//   4. Após salvar, o AuthContext é atualizado com os novos nome + nomePropriedade
+//
+// Mudança de senha é opcional:
+//   - Se os campos de senha estiverem vazios, a senha permanece inalterada
+//   - Para mudar a senha, é obrigatório informar a senha atual (validada no back-end)
 // ==============================
 
 import { useState, useEffect } from "react";
@@ -26,7 +36,8 @@ const EditarCadastroPage = () => {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Carrega os dados atuais do usuário ao entrar na página
+  // ── Carrega os dados atuais do usuário ao entrar na página ───────────────
+  // Se o token estiver ausente ou inválido, redireciona para o login
   useEffect(() => {
     const carregarDados = async () => {
       const token = localStorage.getItem("easy_cattle_token");
@@ -55,16 +66,18 @@ const EditarCadastroPage = () => {
     carregarDados();
   }, []);
 
+  // ── Submissão do formulário de edição ─────────────────────────────────────
   const handleSalvar = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
 
+    // Validações client-side de senha (antes de chamar a API)
     if (passwordNova && passwordNova !== confirmPasswordNova) {
       setError("As novas senhas não coincidem.");
       return;
     }
-
+    // Não permite definir nova senha sem informar a atual (segurança)
     if (passwordNova && !passwordAtual) {
       setError("Informe sua senha atual para alterar a senha.");
       return;
@@ -100,7 +113,8 @@ const EditarCadastroPage = () => {
         return;
       }
 
-      // Atualiza o contexto com os novos dados
+      // Atualiza o AuthContext para refletir os novos dados imediatamente em toda a UI
+      // (ex: nome na sidebar e nomePropriedade no Dashboard)
       login({ nome, nomePropriedade }, token || "");
       setSuccess("Cadastro atualizado com sucesso!");
       setPasswordAtual("");

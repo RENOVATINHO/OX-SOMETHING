@@ -1,5 +1,14 @@
 // ==============================
-// LoginPage.tsx — Tela de login da aplicação
+// LoginPage.tsx — Tela de autenticação (pública — sem AppLayout)
+//
+// Fluxo de autenticação:
+//   1. Usuário preenche email + senha e envia o formulário
+//   2. POST /api/login → retorna { token, nome, nomePropriedade }
+//   3. login() do AuthContext salva os dados no estado + localStorage
+//   4. navigate("/dashboard") redireciona para a área autenticada
+//
+// Nota: o checkbox "Salvar senha" existe no UI mas ainda não implementa
+// nenhuma lógica (savePassword não é usado no handleLogin).
 // ==============================
 
 import { useState } from "react";
@@ -14,10 +23,11 @@ const LoginPage = () => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [savePassword, setSavePassword] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [savePassword, setSavePassword] = useState(false); // UI apenas — não implementado
+  const [error, setError] = useState("");      // mensagem de erro exibida abaixo do form
+  const [loading, setLoading] = useState(false); // desabilita o botão durante o request
 
+  // ── Envio do formulário de login ──────────────────────────────────────────
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -33,14 +43,17 @@ const LoginPage = () => {
       const data = await response.json();
 
       if (!response.ok) {
+        // Exibe a mensagem de erro retornada pela API (ex: "Credenciais inválidas")
         setError(data.error || "Erro ao fazer login.");
         return;
       }
 
+      // Salva o token JWT + dados do usuário no AuthContext e no localStorage
       login({ nome: data.nome, nomePropriedade: data.nomePropriedade }, data.token);
 
-      navigate("/dashboard");
+      navigate("/dashboard"); // redireciona para a área autenticada
     } catch (err) {
+      // Falha de rede ou servidor offline
       setError("Não foi possível conectar ao servidor.");
     } finally {
       setLoading(false);

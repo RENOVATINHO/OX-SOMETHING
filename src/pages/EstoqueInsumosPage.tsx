@@ -1,5 +1,18 @@
 // ==============================
-// EstoqueInsumosPage.tsx — Dashboard e movimentação de estoque de insumos
+// EstoqueInsumosPage.tsx — Visão geral e movimentação do estoque de insumos
+//
+// Responsabilidades:
+//   • Cards de resumo: total de produtos, valor em estoque e nº de categorias
+//   • Gráfico de rosca: distribuição do valor por categoria (alimentacao/saude/solo_pasto)
+//   • Gráficos de barras por categoria: quantidade em estoque por insumo
+//   • Tabela de movimentação: botões Entrada e Saída para cada insumo
+//   • Modal de movimentação: registra entrada (com valor unitário) ou saída (sem valor)
+//
+// Fonte de dados:
+//   GET /api/insumos              → lista de insumos com quantidade_estoque atual
+//   GET /api/insumos/dashboard    → dados agregados por categoria para os gráficos
+//   POST /api/insumos/:id/entrada → adiciona ao estoque
+//   POST /api/insumos/:id/saida   → subtrai do estoque
 // ==============================
 
 import { useState, useEffect } from "react";
@@ -8,41 +21,48 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AppLayout from "@/components/AppLayout";
 
+// Insumo individual com quantidade atual em estoque
 interface Insumo {
   id: number;
   nome: string;
-  categoria: "alimentacao" | "saude" | "solo_pasto";
+  categoria: "alimentacao" | "saude" | "solo_pasto"; // categorias base (além das dinâmicas)
   unidade: string;
   valor_unitario: number;
-  quantidade_estoque: number;
+  quantidade_estoque: number; // atualizado a cada entrada/saída registrada
 }
 
+// Dados de um insumo no endpoint de dashboard (valores já calculados pelo back-end)
 interface DashboardCategoria {
   nome: string;
   unidade: string;
-  quantidade: number;
+  quantidade: number;   // estoque atual
   valorUnitario: number;
-  valorTotal: number;
+  valorTotal: number;   // quantidade × valorUnitario (pré-calculado)
 }
 
+// Estrutura do endpoint GET /api/insumos/dashboard — insumos agrupados por categoria
 interface DashboardData {
   alimentacao: DashboardCategoria[];
   saude: DashboardCategoria[];
   solo_pasto: DashboardCategoria[];
 }
 
+// Conversão de slug para nome exibível nas abas e tabela
 const categoriasLabel: Record<string, string> = {
   alimentacao: "Alimentação",
   saude: "Saúde",
   solo_pasto: "Solo/Pasto",
 };
 
+// Cores HSL dos gráficos — mesmas do GraficoRoscaInsumos para consistência visual
 const CORES_ROSCA = {
-  alimentacao: "hsl(45 90% 50%)",
-  saude: "hsl(0 70% 55%)",
-  solo_pasto: "hsl(160 60% 45%)",
+  alimentacao: "hsl(45 90% 50%)",  // âmbar
+  saude: "hsl(0 70% 55%)",          // vermelho
+  solo_pasto: "hsl(160 60% 45%)",   // verde
 };
 
+// Componente interno: gráfico de barras para uma categoria específica
+// Recebe os dados já filtrados e a cor correspondente à categoria
 const GraficoCategoria = ({ dados, cor }: { dados: DashboardCategoria[]; cor: string }) => {
   if (dados.length === 0) return (
     <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">
@@ -101,6 +121,7 @@ const EstoqueInsumosPage = () => {
 
   useEffect(() => { carregarDados(); }, []);
 
+  // Pré-preenche e abre o modal de movimentação para o insumo selecionado
   const abrirModal = (insumo: Insumo, tipo: "entrada" | "saida") => {
     setInsumoSelecionado(insumo);
     setModalTipo(tipo);
@@ -111,6 +132,9 @@ const EstoqueInsumosPage = () => {
     setModalAberto(true);
   };
 
+  // Registra a movimentação (entrada ou saída) na API e recarrega os dados
+  // Entrada: exige quantidade + valor unitário (atualiza o preço médio do insumo)
+  // Saída:   exige apenas a quantidade (sem valor — só subtrai do estoque)
   const handleMovimentacao = async () => {
     if (!quantidade || Number(quantidade) <= 0) {
       setErroModal("Informe uma quantidade válida.");
@@ -120,6 +144,7 @@ const EstoqueInsumosPage = () => {
     const token = localStorage.getItem("easy_cattle_token");
     try {
       const body: Record<string, unknown> = { quantidade: Number(quantidade), observacao };
+      // valor_unitario só é enviado nas entradas — nas saídas não é necessário
       if (modalTipo === "entrada") body.valor_unitario = Number(valor);
 
       const res = await fetch(`http://localhost:3001/api/insumos/${insumoSelecionado?.id}/${modalTipo}`, {

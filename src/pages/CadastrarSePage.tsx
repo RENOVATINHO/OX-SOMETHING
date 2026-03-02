@@ -1,5 +1,16 @@
 // ==============================
-// CadastrarSePage.tsx — Tela de cadastro de novo usuário
+// CadastrarSePage.tsx — Cadastro de novo usuário e propriedade
+//
+// Fluxo:
+//   1. Usuário preenche dados pessoais + dados da propriedade + credenciais
+//   2. POST /api/cadastro → cria usuário + propriedade no banco
+//   3. Resposta retorna token JWT + nome + nomePropriedade
+//   4. login() salva os dados no AuthContext e redireciona para /dashboard
+//
+// Campos obrigatórios: nome, nomePropriedade, endereco, documento, email, password
+// Campos opcionais:   referencia, cep
+//
+// Página pública — sem AppLayout (mesma estrutura visual do LoginPage).
 // ==============================
 
 import { useState } from "react";
@@ -28,6 +39,7 @@ const CadastrarSePage = () => {
     e.preventDefault();
     setError("");
 
+    // Validação client-side: senhas devem coincidir antes de enviar à API
     if (password !== confirmPassword) {
       setError("As senhas não coincidem.");
       return;
@@ -49,9 +61,10 @@ const CadastrarSePage = () => {
         return;
       }
 
+      // Salva o token no AuthContext — o usuário já está logado após o cadastro
       localStorage.setItem("token", data.token);
       login({ nome: data.nome, nomePropriedade: data.nomePropriedade }, data.token);
-      navigate("/dashboard");
+      navigate("/dashboard"); // redireciona direto para o Dashboard sem precisar logar
     } catch (err) {
       setError("Não foi possível conectar ao servidor.");
     } finally {
