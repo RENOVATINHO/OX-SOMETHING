@@ -50,7 +50,7 @@ const CadastrarSePage = () => {
       }
 
       localStorage.setItem("token", data.token);
-      login({ nome: data.nome, nomePropriedade: data.nomePropriedade });
+      login({ nome: data.nome, nomePropriedade: data.nomePropriedade }, data.token);
       navigate("/dashboard");
     } catch (err) {
       setError("Não foi possível conectar ao servidor.");
