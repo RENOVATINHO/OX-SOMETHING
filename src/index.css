@@ -1,107 +1,329 @@
 /* ==============================
-   index.css — Estilos globais e Design System da aplicação Easy Cattle
-   Define variáveis de tema (design tokens) usando CSS custom properties em HSL
-   Todas as cores da aplicação são controladas a partir daqui via Tailwind CSS
+   index.css — Dark Analytics Dashboard Design System
+   Easy Cattle — Futuristic dark navy UI
    ============================== */
 
-/* Importa a fonte Nunito do Google Fonts — usada em toda a aplicação */
-/* Pesos disponíveis: 400 (regular), 600 (semibold), 700 (bold), 800 (extrabold) */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+/* Google Fonts — Exo 2 (headings), IBM Plex Mono (numbers), DM Sans (UI labels) */
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
 
-/* Diretivas do Tailwind CSS — gera as classes utilitárias */
-@tailwind base;       /* Reset CSS + estilos base do Tailwind */
-@tailwind components; /* Classes de componentes customizados */
-@tailwind utilities;  /* Classes utilitárias (flex, p-4, text-sm, etc.) */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* ===== VARIÁVEIS DE TEMA (DESIGN TOKENS) ===== */
-/* Todas as cores são definidas em formato HSL (sem a função hsl()) */
-/* Isso permite que o Tailwind adicione opacidade dinamicamente: bg-primary/50 */
+/* ===== DESIGN TOKENS — Dark Analytics Palette ===== */
 @layer base {
   :root {
-    /* Cor de fundo principal da aplicação (cinza escuro azulado) */
-    --background: 220 20% 10%;
-    /* Cor do texto principal (cinza claro) */
-    --foreground: 210 20% 90%;
+    /* ── Core Backgrounds ─────────────────────────────── */
+    --background:    228 35% 14%;   /* #1a1a2e deep navy */
+    --foreground:    0 0% 100%;     /* #ffffff white */
 
-    /* Cor de fundo dos cards e painéis (cinza escuro levemente mais claro que o background) */
-    --card: 220 20% 14%;
-    /* Cor do texto dentro dos cards */
-    --card-foreground: 210 20% 90%;
+    --card:          224 42% 20%;   /* #1f2b4a card bg */
+    --card-foreground: 0 0% 100%;
 
-    /* Cor de fundo de popovers e menus dropdown */
-    --popover: 220 20% 14%;
-    --popover-foreground: 210 20% 90%;
+    --popover:       224 42% 20%;
+    --popover-foreground: 0 0% 100%;
 
-    /* Cor primária da marca — verde esmeralda (usada em botões, links, destaques) */
-    --primary: 160 55% 40%;
-    /* Texto sobre fundo primário — branco puro para máximo contraste */
+    /* ── Brand Colors ─────────────────────────────────── */
+    /* Primary = orange/coral accent */
+    --primary:       18 100% 60%;   /* #ff6b35 orange */
     --primary-foreground: 0 0% 100%;
 
-    /* Cor secundária — cinza azulado escuro (para elementos menos importantes) */
-    --secondary: 220 20% 18%;
-    --secondary-foreground: 210 20% 85%;
+    /* Secondary = purple accent */
+    --secondary:     262 73% 57%;   /* #7c3aed purple */
+    --secondary-foreground: 0 0% 100%;
 
-    /* Cor para elementos silenciados/inativos (backgrounds sutis, hover states) */
-    --muted: 220 15% 18%;
-    /* Texto em tom mais fraco — usado para labels, placeholders e textos secundários */
-    --muted-foreground: 215 15% 55%;
+    /* ── Supporting ───────────────────────────────────── */
+    --muted:         224 38% 18%;   /* slightly lighter than card */
+    --muted-foreground: 218 25% 55%; /* #8892b0 */
 
-    /* Cor de destaque/accent — verde mais claro que a primária (hover de botões) */
-    --accent: 160 45% 50%;
-    --accent-foreground: 0 0% 100%;
+    --accent:        187 100% 50%;  /* #00e5ff teal */
+    --accent-foreground: 228 35% 14%;
 
-    /* Cor de erro/perigo — vermelho (usado em mensagens de erro, botão de deletar) */
-    --destructive: 0 72% 51%;
+    --destructive:   0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Cor de sucesso — verde (usado em indicadores de operação bem-sucedida) */
     --success: 142 60% 40%;
     --success-foreground: 0 0% 100%;
 
-    /* Cor de alerta/warning — amarelo/laranja (usado em avisos) */
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    /* Cor das bordas — cinza sutil para separar visualmente os elementos */
-    --border: 220 15% 22%;
-    /* Cor de borda para campos de input */
-    --input: 220 15% 22%;
-    /* Cor do anel de foco (focus ring) — usa a mesma cor primária */
-    --ring: 160 55% 40%;
+    /* ── Layout ───────────────────────────────────────── */
+    --border: 224 42% 20%;           /* rgba(255,255,255,0.08) equiv */
+    --input:  224 42% 20%;
+    --ring:   18 100% 60%;
 
-    /* Raio de borda padrão para cards e botões */
     --radius: 0.75rem;
 
-    /* Gradiente do cabeçalho — vai de um cinza mais escuro para um mais claro */
-    --header-start: 220 30% 12%;
-    --header-end: 220 25% 16%;
-
-    /* ===== VARIÁVEIS DA SIDEBAR ===== */
-    /* Cor de fundo da barra lateral de navegação */
-    --sidebar-background: 220 22% 12%;
-    /* Cor do texto na sidebar */
-    --sidebar-foreground: 210 20% 90%;
-    /* Cor primária usada nos itens ativos da sidebar */
-    --sidebar-primary: 160 55% 40%;
+    /* ── Sidebar ──────────────────────────────────────── */
+    --sidebar-background: 228 35% 11%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 18 100% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    /* Cor de hover dos itens da sidebar */
-    --sidebar-accent: 220 20% 18%;
-    --sidebar-accent-foreground: 210 20% 85%;
-    /* Bordas e anel de foco da sidebar */
-    --sidebar-border: 220 15% 20%;
-    --sidebar-ring: 160 55% 40%;
+    --sidebar-accent: 224 42% 20%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 224 42% 18%;
+    --sidebar-ring: 18 100% 60%;
+
+    /* ── Raw accent values for direct CSS use ─────────── */
+    --accent-orange: #ff6b35;
+    --accent-purple: #7c3aed;
+    --accent-pink:   #e040fb;
+    --accent-teal:   #00e5ff;
+    --accent-gold:   #fbbf24;
+
+    --text-secondary: #8892b0;
+    --text-muted:     #4a5568;
+    --border-subtle:  rgba(255,255,255,0.08);
+
+    --gradient-warm: linear-gradient(135deg, #ff6b35, #e040fb);
+    --gradient-cool: linear-gradient(135deg, #7c3aed, #00e5ff);
+    --gradient-chart: linear-gradient(180deg, #e040fb 0%, #7c3aed 50%, #ff6b35 100%);
   }
 }
 
-/* ===== ESTILOS BASE GLOBAIS ===== */
+/* ===== GLOBAL BASE ===== */
 @layer base {
-  /* Aplica a cor de borda padrão a todos os elementos com borda */
   * {
     @apply border-border;
   }
-  /* Aplica cor de fundo, cor de texto e fonte Nunito ao body */
-  /* A classe font-nunito é definida no tailwind.config.ts */
+
   body {
-    @apply bg-background text-foreground font-nunito;
+    @apply bg-background text-foreground;
+    font-family: 'DM Sans', 'Nunito', sans-serif;
+    /* Subtle noise texture overlay */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 128px 128px;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Exo 2', sans-serif;
+  }
+}
+
+/* ===== KEYFRAME ANIMATIONS ===== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes ringDraw {
+  from { stroke-dashoffset: var(--ring-circumference, 283); }
+  to   { stroke-dashoffset: var(--ring-target, 0); }
+}
+
+@keyframes barGrow {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(255, 107, 53, 0.4); }
+  50%       { box-shadow: 0 0 18px rgba(255, 107, 53, 0.8); }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ===== UTILITY CLASSES ===== */
+@layer utilities {
+
+  /* Card base */
+  .dash-card {
+    background: hsl(var(--card));
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 20px 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .dash-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    background: var(--gradient-warm);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-text-cool {
+    background: var(--gradient-cool);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Orange glow for active icons */
+  .glow-orange {
+    filter: drop-shadow(0 0 6px rgba(255, 107, 53, 0.7));
+  }
+
+  /* Stagger animations */
+  .animate-enter {
+    animation: fadeInUp 0.4s ease-out both;
+  }
+
+  .stagger-1 { animation-delay: 0.05s; }
+  .stagger-2 { animation-delay: 0.10s; }
+  .stagger-3 { animation-delay: 0.15s; }
+  .stagger-4 { animation-delay: 0.20s; }
+  .stagger-5 { animation-delay: 0.25s; }
+  .stagger-6 { animation-delay: 0.30s; }
+
+  /* Sidebar active glow */
+  .sidebar-active-glow {
+    box-shadow: inset 3px 0 0 var(--accent-orange),
+                0 0 12px rgba(255, 107, 53, 0.2);
+    background: rgba(255, 107, 53, 0.08);
+  }
+
+  /* Gradient border top */
+  .gradient-border-top {
+    position: relative;
+  }
+  .gradient-border-top::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--gradient-warm);
+    border-radius: 12px 12px 0 0;
+  }
+
+  /* Input dark style */
+  .input-dark {
+    background: hsl(var(--background));
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 0.875rem;
+    color: #fff;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  .input-dark:focus {
+    border-color: var(--accent-orange);
+    box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.2);
+  }
+
+  .input-dark::placeholder {
+    color: var(--text-secondary);
+  }
+
+  /* Badge variants */
+  .badge-orange {
+    background: rgba(255, 107, 53, 0.15);
+    color: var(--accent-orange);
+    border: 1px solid rgba(255, 107, 53, 0.3);
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .badge-purple {
+    background: rgba(124, 58, 237, 0.15);
+    color: var(--accent-purple);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .badge-teal {
+    background: rgba(0, 229, 255, 0.12);
+    color: var(--accent-teal);
+    border: 1px solid rgba(0, 229, 255, 0.25);
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Gradient button */
+  .btn-gradient {
+    background: var(--gradient-warm);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 700;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+
+  .btn-gradient:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .btn-gradient:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Outlined button */
+  .btn-outline-dim {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+
+  .btn-outline-dim:hover {
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    border-color: rgba(255,255,255,0.3);
+  }
+
+  /* Number font */
+  .num {
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* Heading font */
+  .heading {
+    font-family: 'Exo 2', sans-serif;
   }
 }
