@@ -26,6 +26,8 @@ import EditarCadastroPage from "./pages/EditarCadastroPage";
 import InsumosPage from "./pages/InsumosPage";
 import NovoInsumoPage from "./pages/NovoInsumoPage";
 import EstoqueInsumosPage from "./pages/EstoqueInsumosPage";
+import NovaVendaPage from "./pages/NovaVendaPage";
+import ConfiguracoesPage from "./pages/ConfiguracoesPage";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +54,8 @@ const App = () => (
             <Route path="/insumos" element={<InsumosPage />} />
             <Route path="/insumos/estoque" element={<EstoqueInsumosPage />} />
             <Route path="/editar-cadastro" element={<EditarCadastroPage />} />
+            <Route path="/nova-venda" element={<NovaVendaPage />} />
+            <Route path="/configuracoes" element={<ConfiguracoesPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
