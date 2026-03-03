@@ -287,20 +287,6 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {/* ── Quick Actions ─────────────────────────────────────────────────── */}
-      <div className="mb-2">
-        <p className="text-base font-bold text-white font-exo2 mb-4">Ações Rápidas</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {quickActions.map((action, i) => (
-            <QuickAction
-              key={action.label}
-              {...action}
-              onClick={() => navigate(action.route)}
-              delay={300 + i * 60}
-            />
-          ))}
-        </div>
-      </div>
 
     </AppLayout>
   );
