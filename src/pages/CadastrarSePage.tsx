@@ -48,7 +48,7 @@ const CadastrarSePage = () => {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3001/api/cadastro", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/cadastro`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nome, nomePropriedade, endereco, referencia, documento, cep, email, password }),
@@ -64,8 +64,8 @@ const CadastrarSePage = () => {
       // Salva o token no AuthContext — o usuário já está logado após o cadastro
       localStorage.setItem("token", data.token);
       login({ nome: data.nome, nomePropriedade: data.nomePropriedade }, data.token);
-      navigate("/dashboard"); // redireciona direto para o Dashboard sem precisar logar
-    } catch (err) {
+      navigate("/dashboard");
+    } catch {
       setError("Não foi possível conectar ao servidor.");
     } finally {
       setLoading(false);
@@ -73,79 +73,142 @@ const CadastrarSePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-primary/5 flex items-center justify-center p-4">
-      <div className="bg-card rounded-2xl shadow-xl w-full max-w-2xl p-8">
+    <div className="min-h-screen bg-[#0d1117] flex items-center justify-center p-4">
+      <div className="w-full max-w-lg">
 
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-extrabold text-primary tracking-wide mb-1">
-            Vamos iniciar a nova forma de administrar fazendas
+        {/* Cabeçalho */}
+        <div className="text-center mb-8">
+          <img src={mascotImg} alt="Mascote" className="w-12 h-12 object-contain mx-auto mb-4" />
+          <h1 className="text-2xl font-extrabold text-white font-exo2 tracking-wide mb-1">
+            Crie sua conta
           </h1>
-          <p className="text-muted-foreground text-sm mb-4">insira seus dados e de sua propriedade</p>
-          <img src={mascotImg} alt="Mascote" className="w-10 h-10 object-contain mx-auto" />
+          <p className="text-sm text-[#8892b0]">Preencha seus dados e os da sua propriedade</p>
         </div>
 
-        <form onSubmit={handleCadastro} className="flex flex-col gap-3">
+        {/* Seção: Dados pessoais */}
+        <div className="mb-3">
+          <p className="text-[10px] uppercase tracking-widest text-[#4a5568] font-semibold mb-2 px-1">Dados pessoais</p>
+          <div className="rounded-2xl overflow-hidden divide-y divide-white/[0.06]" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
 
-          <div className="flex gap-3">
-            <div className="flex items-center bg-background rounded-lg border border-border px-4 py-3 flex-1">
-              <input type="text" placeholder="Seu nome completo" value={nome} onChange={(e) => setNome(e.target.value)} required className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-sm" />
-              <User size={18} className="text-muted-foreground" />
+            {/* Nome | Propriedade */}
+            <div className="grid grid-cols-2 divide-x divide-white/[0.06]">
+              <div className="px-5 py-4">
+                <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Nome *</label>
+                <div className="flex items-center gap-2">
+                  <User size={14} className="text-[#8892b0]" />
+                  <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Seu nome" required
+                    className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]" />
+                </div>
+              </div>
+              <div className="px-5 py-4">
+                <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Propriedade *</label>
+                <div className="flex items-center gap-2">
+                  <Home size={14} className="text-[#8892b0]" />
+                  <input value={nomePropriedade} onChange={(e) => setNomePropriedade(e.target.value)} placeholder="Nome da fazenda" required
+                    className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]" />
+                </div>
+              </div>
             </div>
-            <div className="flex items-center bg-background rounded-lg border border-border px-4 py-3 flex-1">
-              <input type="text" placeholder="Nome da propriedade" value={nomePropriedade} onChange={(e) => setNomePropriedade(e.target.value)} required className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-sm" />
-              <Home size={18} className="text-muted-foreground" />
+
+            {/* Endereço | Referência */}
+            <div className="grid grid-cols-2 divide-x divide-white/[0.06]">
+              <div className="px-5 py-4">
+                <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Endereço *</label>
+                <div className="flex items-center gap-2">
+                  <MapPin size={14} className="text-[#8892b0]" />
+                  <input value={endereco} onChange={(e) => setEndereco(e.target.value)} placeholder="Endereço" required
+                    className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]" />
+                </div>
+              </div>
+              <div className="px-5 py-4">
+                <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Referência</label>
+                <div className="flex items-center gap-2">
+                  <MapPin size={14} className="text-[#8892b0]" />
+                  <input value={referencia} onChange={(e) => setReferencia(e.target.value)} placeholder="Opcional"
+                    className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]" />
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div className="flex gap-3">
-            <div className="flex items-center bg-background rounded-lg border border-border px-4 py-3 flex-1">
-              <input type="text" placeholder="Endereço" value={endereco} onChange={(e) => setEndereco(e.target.value)} required className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-sm" />
-              <MapPin size={18} className="text-muted-foreground" />
+            {/* Documento | CEP */}
+            <div className="grid grid-cols-2 divide-x divide-white/[0.06]">
+              <div className="px-5 py-4">
+                <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Documento *</label>
+                <div className="flex items-center gap-2">
+                  <FileText size={14} className="text-[#8892b0]" />
+                  <input value={documento} onChange={(e) => setDocumento(e.target.value)} placeholder="CPF/CNPJ" required
+                    className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]" />
+                </div>
+              </div>
+              <div className="px-5 py-4">
+                <label className="text-xs font-semibold text-[#8892b0] mb-1 block">CEP</label>
+                <div className="flex items-center gap-2">
+                  <MapPin size={14} className="text-[#8892b0]" />
+                  <input value={cep} onChange={(e) => setCep(e.target.value)} placeholder="Opcional"
+                    className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]" />
+                </div>
+              </div>
             </div>
-            <div className="flex items-center bg-background rounded-lg border border-border px-4 py-3 flex-1">
-              <input type="text" placeholder="Referência" value={referencia} onChange={(e) => setReferencia(e.target.value)} className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-sm" />
-              <MapPin size={18} className="text-muted-foreground" />
+
+          </div>
+        </div>
+
+        {/* Seção: Acesso */}
+        <div className="mb-6">
+          <p className="text-[10px] uppercase tracking-widest text-[#4a5568] font-semibold mb-2 px-1">Acesso</p>
+          <div className="rounded-2xl overflow-hidden divide-y divide-white/[0.06]" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+
+            {/* Email */}
+            <div className="flex items-center gap-4 px-5 py-4">
+              <div className="flex-1">
+                <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Email *</label>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@exemplo.com" required
+                  className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]" />
+              </div>
+              <Mail size={20} className="text-[#8892b0] flex-shrink-0" />
             </div>
-          </div>
 
-          <div className="flex gap-3">
-            <div className="flex items-center bg-background rounded-lg border border-border px-4 py-3 flex-1">
-              <input type="text" placeholder="Documento (CPF/CNPJ)" value={documento} onChange={(e) => setDocumento(e.target.value)} required className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-sm" />
-              <FileText size={18} className="text-muted-foreground" />
+            {/* Senha | Confirmar */}
+            <div className="grid grid-cols-2 divide-x divide-white/[0.06]">
+              <div className="px-5 py-4">
+                <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Senha *</label>
+                <div className="flex items-center gap-2">
+                  <Lock size={14} className="text-[#8892b0]" />
+                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Crie uma senha" required
+                    className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]" />
+                </div>
+              </div>
+              <div className="px-5 py-4">
+                <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Confirmar *</label>
+                <div className="flex items-center gap-2">
+                  <Lock size={14} className="text-[#8892b0]" />
+                  <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirme a senha" required
+                    className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]" />
+                </div>
+              </div>
             </div>
-            <div className="flex items-center bg-background rounded-lg border border-border px-4 py-3 flex-1">
-              <input type="text" placeholder="CEP (opcional)" value={cep} onChange={(e) => setCep(e.target.value)} className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-sm" />
-              <MapPin size={18} className="text-muted-foreground" />
-            </div>
+
           </div>
+        </div>
 
-          <div className="flex items-center bg-background rounded-lg border border-border px-4 py-3">
-            <input type="email" placeholder="email@exemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-sm" />
-            <Mail size={18} className="text-muted-foreground" />
-          </div>
+        {error && <p className="text-sm text-red-400 text-center mb-4">{error}</p>}
 
-          <div className="flex items-center bg-background rounded-lg border border-border px-4 py-3">
-            <input type="password" placeholder="Crie uma senha" value={password} onChange={(e) => setPassword(e.target.value)} required className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-sm" />
-            <Lock size={18} className="text-muted-foreground" />
-          </div>
+        <button
+          onClick={handleCadastro as any}
+          disabled={loading}
+          className="w-full py-3.5 rounded-2xl text-white font-bold text-sm transition-all disabled:opacity-40"
+          style={{ background: "linear-gradient(135deg, #7c3aed, #e040fb)" }}
+        >
+          {loading ? "Cadastrando..." : "Criar conta"}
+        </button>
 
-          <div className="flex items-center bg-background rounded-lg border border-border px-4 py-3">
-            <input type="password" placeholder="Confirme sua senha" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-sm" />
-            <Lock size={18} className="text-muted-foreground" />
-          </div>
-
-          {error && <p className="text-sm text-destructive text-center">{error}</p>}
-
-          <button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground rounded-lg py-3 text-base font-bold hover:bg-accent transition-colors disabled:opacity-60">
-            {loading ? "Cadastrando..." : "Criar conta"}
+        <p className="text-center text-sm text-[#8892b0] mt-4">
+          Já tem uma conta?{" "}
+          <button type="button" onClick={() => navigate("/")} className="text-[#7c3aed] font-bold hover:underline">
+            Faça login
           </button>
+        </p>
 
-          <p className="text-center text-sm text-muted-foreground">
-            Já tem uma conta?{" "}
-            <button type="button" onClick={() => navigate("/")} className="text-primary font-bold hover:underline">Faça login</button>
-          </p>
-
-        </form>
       </div>
     </div>
   );

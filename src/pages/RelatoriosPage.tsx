@@ -7,7 +7,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { PawPrint, Calendar, DollarSign, Download, ChevronRight, ChevronDown, FileSpreadsheet, Loader2 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
-const API = "http://localhost:3001";
+const API = import.meta.env.VITE_API_URL;
 
 // ──────────────────────────────────────────────────────────────────────────────
 // TYPES

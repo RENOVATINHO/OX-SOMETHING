@@ -197,7 +197,7 @@ const DashboardPage = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("easy_cattle_token");
-    fetch("http://localhost:3001/api/animais/stats", {
+    fetch(`${import.meta.env.VITE_API_URL}/api/animais/stats`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(r => r.json())

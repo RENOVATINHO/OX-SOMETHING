@@ -50,7 +50,7 @@ const NovaCompraAnimaisPage = () => {
   // ── Carrega dados iniciais em paralelo ────────────────────────────────────
   useEffect(() => {
     // Busca a lista de vendedores cadastrados pelo usuário logado
-    fetch("http://localhost:3001/api/vendedores", {
+    fetch(`${import.meta.env.VITE_API_URL}/api/vendedores`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(r => r.json())
@@ -61,7 +61,7 @@ const NovaCompraAnimaisPage = () => {
       .catch(() => setVendedores([]));
 
     // Busca o próximo número sequencial disponível para exibir no preview
-    fetch("http://localhost:3001/api/compras-animais/proximo-numero", {
+    fetch(`${import.meta.env.VITE_API_URL}/api/compras-animais/proximo-numero`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(r => r.json())
@@ -87,7 +87,7 @@ const NovaCompraAnimaisPage = () => {
     setLoading(true);
     try {
       // Envia a compra para a API — o back-end cria a compra + N registros de animais
-      const res = await fetch("http://localhost:3001/api/compras-animais", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/compras-animais`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

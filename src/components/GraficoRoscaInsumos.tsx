@@ -32,7 +32,7 @@ const GraficoRoscaInsumos = () => {
     const carregar = async () => {
       const token = localStorage.getItem("easy_cattle_token");
       try {
-        const res = await fetch("http://localhost:3001/api/insumos/dashboard", {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/insumos/dashboard`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data: DashboardData = await res.json();

@@ -154,7 +154,7 @@ const AppLayout = ({ children, title }: AppLayoutProps) => {
     setLoadingLimpar(true);
     const token = localStorage.getItem("easy_cattle_token");
     try {
-      const res = await fetch("http://localhost:3001/api/dev/limpar-tudo", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/dev/limpar-tudo`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

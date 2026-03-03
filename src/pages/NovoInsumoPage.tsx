@@ -31,7 +31,7 @@ const NovoInsumoPage = () => {
     const token = localStorage.getItem("easy_cattle_token");
 
     try {
-      const res = await fetch("http://localhost:3001/api/insumos", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/insumos`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({

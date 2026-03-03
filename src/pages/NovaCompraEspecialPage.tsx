@@ -53,7 +53,7 @@ const NovaCompraEspecialPage = () => {
 
   // Busca o próximo número sequencial para exibir no preview (mesmo endpoint da compra normal)
   useEffect(() => {
-    fetch("http://localhost:3001/api/compras-animais/proximo-numero", { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${import.meta.env.VITE_API_URL}/api/compras-animais/proximo-numero`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json()).then(d => setProximoNumero(d.numero)).catch(() => {});
   }, []);
 
@@ -71,7 +71,7 @@ const NovaCompraEspecialPage = () => {
     setLoading(true);
     try {
       // Endpoint específico para cadastros especiais — não exige vendedor_id
-      const res = await fetch("http://localhost:3001/api/compras-animais/especial", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/compras-animais/especial`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({

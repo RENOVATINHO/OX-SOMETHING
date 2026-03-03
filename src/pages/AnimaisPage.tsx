@@ -286,7 +286,7 @@ const AnimaisPage = () => {
 
   const carregarAnimais = async () => {
     try {
-      const res = await fetch("http://localhost:3001/api/animais", { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/animais`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       setAnimais(Array.isArray(data) ? data : []);
     } catch (err) { console.error("Erro ao carregar animais:", err); }
@@ -305,7 +305,7 @@ const AnimaisPage = () => {
   const handleEditar = async () => {
     setLoadingEditar(true);
     try {
-      const res = await fetch(`http://localhost:3001/api/animais/${animalSel?.id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/animais/${animalSel?.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ brinco: editBrinco, peso_entrada: Number(editPeso) || null, observacao: editObs, status: editStatus }),
@@ -322,7 +322,7 @@ const AnimaisPage = () => {
     if (!valorVenda) { setErroVenda("Informe o valor da venda."); return; }
     setLoadingVenda(true);
     try {
-      const res = await fetch(`http://localhost:3001/api/animais/${animalVenda?.id}/venda`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/animais/${animalVenda?.id}/venda`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ valor_venda: Number(valorVenda), data_saida: dataVenda }),
@@ -337,7 +337,7 @@ const AnimaisPage = () => {
   const handleMorte = async () => {
     setLoadingMorte(true);
     try {
-      const res = await fetch(`http://localhost:3001/api/animais/${animalMorte?.id}/morte`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/animais/${animalMorte?.id}/morte`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ causa_morte: causaMorte, data_saida: dataMorte }),

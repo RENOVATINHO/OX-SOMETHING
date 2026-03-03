@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, Calendar, FileText, Tag, Hash, DollarSign } from "lucide-react";
+import { User, Calendar, FileText, Tag, Hash, DollarSign, ShoppingCart } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 
 const NovaVendaPage = () => {
@@ -33,6 +33,13 @@ const NovaVendaPage = () => {
   return (
     <AppLayout title="Nova Venda">
       <div className="max-w-2xl mx-auto">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "#7c3aed18" }}>
+            <ShoppingCart size={18} className="text-[#7c3aed]" />
+          </div>
+          <h2 className="text-base font-bold text-white font-exo2">Registrar Venda</h2>
+        </div>
+
         <form onSubmit={handleSubmit} className="dash-card space-y-0 divide-y divide-white/[0.06]">
 
           {/* Nome do comprador */}

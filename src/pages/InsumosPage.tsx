@@ -87,8 +87,8 @@ const InsumosPage = () => {
   const carregarDados = async () => {
     try {
       const [resInsumos, resCats] = await Promise.all([
-        fetch("http://localhost:3001/api/insumos", { headers: { Authorization: `Bearer ${token}` } }),
-        fetch("http://localhost:3001/api/categorias-insumos", { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${import.meta.env.VITE_API_URL}/api/insumos`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${import.meta.env.VITE_API_URL}/api/categorias-insumos`, { headers: { Authorization: `Bearer ${token}` } }),
       ]);
       setInsumos(await resInsumos.json());
       setCategorias(await resCats.json());
@@ -125,7 +125,7 @@ const InsumosPage = () => {
     if (!editNome || !editCategoria || !editUnidade) { setErroModal("Preencha todos os campos."); return; }
     setLoadingModal(true);
     try {
-      const res = await fetch(`http://localhost:3001/api/insumos/${insumoSelecionado?.id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/insumos/${insumoSelecionado?.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ nome: editNome, categoria: editCategoria, unidade: editUnidade, valor_unitario: Number(editValor) || 0 }),
@@ -142,7 +142,7 @@ const InsumosPage = () => {
     if (!insumoParaExcluir) return;
     setLoadingExcluir(true);
     try {
-      await fetch(`http://localhost:3001/api/insumos/${insumoParaExcluir.id}`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/insumos/${insumoParaExcluir.id}`, {
         method: "DELETE", headers: { Authorization: `Bearer ${token}` },
       });
       setModalExcluir(false);
@@ -155,7 +155,7 @@ const InsumosPage = () => {
     if (!novaCategoriaNome.trim()) { setErroCategoria("Informe o nome da categoria."); return; }
     setLoadingCategoria(true);
     try {
-      const res = await fetch("http://localhost:3001/api/categorias-insumos", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/categorias-insumos`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ nome: novaCategoriaNome }),

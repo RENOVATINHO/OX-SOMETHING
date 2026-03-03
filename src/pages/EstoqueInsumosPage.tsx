@@ -105,8 +105,8 @@ const EstoqueInsumosPage = () => {
     const token = localStorage.getItem("easy_cattle_token");
     try {
       const [resInsumos, resDash] = await Promise.all([
-        fetch("http://localhost:3001/api/insumos", { headers: { Authorization: `Bearer ${token}` } }),
-        fetch("http://localhost:3001/api/insumos/dashboard", { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${import.meta.env.VITE_API_URL}/api/insumos`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${import.meta.env.VITE_API_URL}/api/insumos/dashboard`, { headers: { Authorization: `Bearer ${token}` } }),
       ]);
       const dataInsumos = await resInsumos.json();
       const dataDash = await resDash.json();
@@ -147,7 +147,7 @@ const EstoqueInsumosPage = () => {
       // valor_unitario só é enviado nas entradas — nas saídas não é necessário
       if (modalTipo === "entrada") body.valor_unitario = Number(valor);
 
-      const res = await fetch(`http://localhost:3001/api/insumos/${insumoSelecionado?.id}/${modalTipo}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/insumos/${insumoSelecionado?.id}/${modalTipo}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(body),
