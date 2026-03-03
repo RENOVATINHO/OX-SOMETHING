@@ -15,6 +15,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { Hash, Tag, User, DollarSign, Calendar, AlignLeft } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 
 const NovaCompraEspecialPage = () => {
@@ -94,107 +95,185 @@ const NovaCompraEspecialPage = () => {
     finally { setLoading(false); }
   };
 
+  const accentColor = isTouro ? "#f59e0b" : "#ec4899";
+  const accentBg   = isTouro ? "rgba(245,158,11,0.08)" : "rgba(236,72,153,0.08)";
+
   return (
     <AppLayout title={titulo}>
-      <div className="max-w-2xl">
-        <div className="bg-card rounded-2xl border border-border p-8">
+      <div className="max-w-2xl mx-auto">
 
-          {/* ── Badge indicando o tipo de cadastro (touro âmbar / matriz rosa) ── */}
-          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mb-6 ${isTouro ? "bg-amber-500/10 text-amber-600" : "bg-pink-500/10 text-pink-600"}`}>
-            {isTouro ? "🐂 Touro — Macho Inteiro" : "🐄 Matriz — Fêmea"}
+        {/* Cabeçalho da seção */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: accentBg }}>
+            <span className="text-lg">{isTouro ? "🐂" : "🐄"}</span>
           </div>
+          <h2 className="text-base font-bold text-white font-exo2">
+            {isTouro ? "Cadastrar Touro — Reprodutor" : "Cadastrar Matriz — Fêmea"}
+          </h2>
+        </div>
 
-          {/* ── Preview do número sequencial da compra ─────────────────────── */}
+        <form onSubmit={handleSubmit} className="dash-card space-y-0 divide-y divide-white/[0.06]">
+
+          {/* Preview do número da compra */}
           {proximoNumero && (
-            <div className="flex items-center justify-between bg-muted/40 border border-border rounded-xl px-5 py-4 mb-6">
-              <span className="text-sm text-muted-foreground font-semibold">Número desta compra</span>
-              <span className="text-2xl font-black text-primary font-mono">#{proximoNumero}</span>
+            <div className="flex items-center justify-between px-5 py-4">
+              <span className="text-xs font-semibold text-[#8892b0]">Número deste cadastro</span>
+              <span className="text-2xl font-black font-mono" style={{ color: accentColor }}>#{proximoNumero}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-
-            {/* ── Faixa etária + Quantidade ────────────────────────────────── */}
-            {/* Faixa etária padrão "adulto" pode ser alterada para registrar filhotes de genética especial */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1 block">Faixa etária *</label>
-                <select value={faixaEtaria} onChange={(e) => setFaixaEtaria(e.target.value)} required
-                  className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm text-foreground outline-none">
-                  <option value="bezerro">Bezerro — 0 a 12 meses</option>
-                  <option value="garrote">Garrote — 13 a 24 meses</option>
-                  <option value="novilho">Novilho — 25 a 36 meses</option>
-                  <option value="adulto">Adulto — acima de 36 meses</option>
+          {/* Faixa etária + Quantidade */}
+          <div className="grid grid-cols-2 divide-x divide-white/[0.06]">
+            <div className="px-5 py-4">
+              <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Faixa etária *</label>
+              <div className="flex items-center gap-2">
+                <Tag size={14} className="text-[#8892b0]" />
+                <select
+                  value={faixaEtaria}
+                  onChange={(e) => setFaixaEtaria(e.target.value)}
+                  className="w-full bg-transparent text-white text-sm outline-none appearance-none cursor-pointer"
+                >
+                  <option value="bezerro" className="bg-[#1a2332]">Bezerro — 0 a 12 meses</option>
+                  <option value="garrote" className="bg-[#1a2332]">Garrote — 13 a 24 meses</option>
+                  <option value="novilho" className="bg-[#1a2332]">Novilho — 25 a 36 meses</option>
+                  <option value="adulto" className="bg-[#1a2332]">Adulto — acima de 36 meses</option>
                 </select>
               </div>
-              <div>
-                <label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1 block">Quantidade *</label>
-                <input type="number" value={quantidade} onChange={(e) => setQuantidade(e.target.value)} min="1" required
-                  className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm text-foreground outline-none" />
+            </div>
+            <div className="px-5 py-4">
+              <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Quantidade *</label>
+              <div className="flex items-center gap-2">
+                <Hash size={14} className="text-[#8892b0]" />
+                <input
+                  type="number"
+                  value={quantidade}
+                  onChange={(e) => setQuantidade(e.target.value)}
+                  placeholder="1"
+                  min="1"
+                  className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]"
+                />
               </div>
             </div>
+          </div>
 
-            {/* ── Linhagem: Nome do Pai + Nome da Mãe ─────────────────────── */}
-            {/* Campos de rastreabilidade genética — importantes para programas de melhoramento */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1 block">Nome do pai</label>
-                <input type="text" placeholder="Ex: Touro Bandido" value={nomePai} onChange={(e) => setNomePai(e.target.value)}
-                  className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm text-foreground outline-none" />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1 block">Nome da mãe</label>
-                <input type="text" placeholder="Ex: Vaca Pintada" value={nomeMae} onChange={(e) => setNomeMae(e.target.value)}
-                  className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm text-foreground outline-none" />
-              </div>
-            </div>
-
-            {/* ── Raça + Valor total ───────────────────────────────────────── */}
-            {/* Valor total aqui = preço do animal (ao contrário da compra normal que usa peso × R$/kg) */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1 block">Raça</label>
-                <input type="text" placeholder="Ex: Nelore, Angus..." value={raca} onChange={(e) => setRaca(e.target.value)}
-                  className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm text-foreground outline-none" />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1 block">Valor total (R$)</label>
-                <input type="number" placeholder="Ex: 5000.00" value={valorTotal} onChange={(e) => setValorTotal(e.target.value)} min="0" step="0.01"
-                  className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm text-foreground outline-none" />
+          {/* Nome do pai + Nome da mãe */}
+          <div className="grid grid-cols-2 divide-x divide-white/[0.06]">
+            <div className="px-5 py-4">
+              <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Nome do pai</label>
+              <div className="flex items-center gap-2">
+                <User size={14} className="text-[#8892b0]" />
+                <input
+                  type="text"
+                  value={nomePai}
+                  onChange={(e) => setNomePai(e.target.value)}
+                  placeholder="Ex: Touro Bandido"
+                  className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]"
+                />
               </div>
             </div>
-
-            {/* ── Data de nascimento + Data da compra/entrada ─────────────── */}
-            {/* Data de nascimento é opcional mas importante para calcular a idade atual */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1 block">Data de nascimento</label>
-                <input type="date" value={dataNascimento} onChange={(e) => setDataNascimento(e.target.value)}
-                  className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm text-foreground outline-none" />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1 block">Data da compra *</label>
-                <input type="date" value={data} onChange={(e) => setData(e.target.value)} required
-                  className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm text-foreground outline-none" />
+            <div className="px-5 py-4">
+              <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Nome da mãe</label>
+              <div className="flex items-center gap-2">
+                <User size={14} className="text-[#8892b0]" />
+                <input
+                  type="text"
+                  value={nomeMae}
+                  onChange={(e) => setNomeMae(e.target.value)}
+                  placeholder="Ex: Vaca Pintada"
+                  className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]"
+                />
               </div>
             </div>
+          </div>
 
-            <div>
-              <label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1 block">Observação</label>
-              <input type="text" placeholder="Opcional" value={observacao} onChange={(e) => setObservacao(e.target.value)}
-                className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm text-foreground outline-none" />
+          {/* Raça + Valor total */}
+          <div className="grid grid-cols-2 divide-x divide-white/[0.06]">
+            <div className="px-5 py-4">
+              <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Raça</label>
+              <div className="flex items-center gap-2">
+                <Tag size={14} className="text-[#8892b0]" />
+                <input
+                  type="text"
+                  value={raca}
+                  onChange={(e) => setRaca(e.target.value)}
+                  placeholder="Ex: Nelore, Angus..."
+                  className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]"
+                />
+              </div>
             </div>
+            <div className="px-5 py-4">
+              <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Valor total (R$)</label>
+              <div className="flex items-center gap-2">
+                <DollarSign size={14} className="text-[#8892b0]" />
+                <input
+                  type="number"
+                  value={valorTotal}
+                  onChange={(e) => setValorTotal(e.target.value)}
+                  placeholder="0,00"
+                  min="0"
+                  step="0.01"
+                  className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]"
+                />
+              </div>
+            </div>
+          </div>
 
-            {/* Mensagem de erro de validação ou da API */}
-            {error && <p className="text-sm text-destructive text-center font-semibold">{error}</p>}
+          {/* Data nascimento + Data compra */}
+          <div className="grid grid-cols-2 divide-x divide-white/[0.06]">
+            <div className="px-5 py-4">
+              <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Data de nascimento</label>
+              <div className="flex items-center gap-2">
+                <Calendar size={14} className="text-[#8892b0]" />
+                <input
+                  type="date"
+                  value={dataNascimento}
+                  onChange={(e) => setDataNascimento(e.target.value)}
+                  className="w-full bg-transparent text-white text-sm outline-none"
+                />
+              </div>
+            </div>
+            <div className="px-5 py-4">
+              <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Data da compra *</label>
+              <div className="flex items-center gap-2">
+                <Calendar size={14} className="text-[#8892b0]" />
+                <input
+                  type="date"
+                  value={data}
+                  onChange={(e) => setData(e.target.value)}
+                  className="w-full bg-transparent text-white text-sm outline-none"
+                />
+              </div>
+            </div>
+          </div>
 
-            {/* Botão usa cor âmbar para touro e rosa para matriz — identidade visual consistente */}
-            <button type="submit" disabled={loading}
-              className={`w-full text-white rounded-lg py-3 text-base font-bold transition-colors disabled:opacity-60 mt-2 ${isTouro ? "bg-amber-600 hover:bg-amber-700" : "bg-pink-600 hover:bg-pink-700"}`}>
-              {loading ? "Cadastrando..." : `Cadastrar ${isTouro ? "Touro" : "Matriz"}`}
-            </button>
-          </form>
-        </div>
+          {/* Observação */}
+          <div className="flex items-center gap-4 px-5 py-4">
+            <div className="flex-1">
+              <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Observação</label>
+              <input
+                type="text"
+                value={observacao}
+                onChange={(e) => setObservacao(e.target.value)}
+                placeholder="Opcional"
+                className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]"
+              />
+            </div>
+            <AlignLeft size={20} className="text-[#8892b0] flex-shrink-0" />
+          </div>
+
+        </form>
+
+        {error && <p className="text-sm text-red-400 text-center mt-3">{error}</p>}
+
+        <button
+          onClick={handleSubmit as any}
+          disabled={loading || !faixaEtaria || !quantidade || !data}
+          className="w-full mt-4 py-3.5 rounded-2xl text-white font-bold text-sm transition-all disabled:opacity-40"
+          style={{ background: isTouro ? "linear-gradient(135deg, #f59e0b, #d97706)" : "linear-gradient(135deg, #ec4899, #be185d)" }}
+        >
+          {loading ? "Cadastrando..." : `Cadastrar ${isTouro ? "Touro" : "Matriz"}`}
+        </button>
+
       </div>
     </AppLayout>
   );
