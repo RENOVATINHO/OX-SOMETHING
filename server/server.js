@@ -28,20 +28,120 @@ const autenticar = (req, res, next) => {
 };
 
 // ==============================
-// INIT — Cria tabelas que podem não existir ainda
+// INIT — Cria todas as tabelas na ordem correta
 // ==============================
-db.promise().query(`
-  CREATE TABLE IF NOT EXISTS compras_insumos (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    vendedor_id INT,
-    produto VARCHAR(255) NOT NULL,
-    quantidade INT NOT NULL,
-    valor DECIMAL(10,2) NOT NULL,
-    nota_fiscal VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (vendedor_id) REFERENCES vendedores(id) ON DELETE SET NULL
-  )
-`).catch(err => console.error('Erro ao criar tabela compras_insumos:', err.message));
+async function initDB() {
+  const conn = db.promise();
+  try {
+    await conn.query(`CREATE TABLE IF NOT EXISTS usuarios (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      nome VARCHAR(255) NOT NULL,
+      nome_propriedade VARCHAR(255) NOT NULL,
+      endereco VARCHAR(255) NOT NULL,
+      referencia VARCHAR(255),
+      documento VARCHAR(50) NOT NULL,
+      cep VARCHAR(20),
+      email VARCHAR(255) NOT NULL UNIQUE,
+      senha VARCHAR(255) NOT NULL,
+      criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    await conn.query(`CREATE TABLE IF NOT EXISTS vendedores (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      nome VARCHAR(255) NOT NULL,
+      documento VARCHAR(50),
+      telefone VARCHAR(50),
+      cidade VARCHAR(100),
+      criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    await conn.query(`CREATE TABLE IF NOT EXISTS categorias_insumos (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      nome VARCHAR(255) NOT NULL,
+      slug VARCHAR(255) NOT NULL
+    )`);
+
+    await conn.query(`CREATE TABLE IF NOT EXISTS insumos (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      nome VARCHAR(255) NOT NULL,
+      categoria VARCHAR(255) NOT NULL,
+      unidade VARCHAR(50) NOT NULL,
+      valor_unitario DECIMAL(10,2) DEFAULT 0,
+      quantidade_estoque DECIMAL(10,2) DEFAULT 0,
+      criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    await conn.query(`CREATE TABLE IF NOT EXISTS movimentacoes_insumos (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      insumo_id INT,
+      tipo ENUM('entrada','saida') NOT NULL,
+      quantidade DECIMAL(10,2) NOT NULL,
+      valor_unitario DECIMAL(10,2) DEFAULT 0,
+      observacao VARCHAR(255),
+      criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (insumo_id) REFERENCES insumos(id) ON DELETE CASCADE
+    )`);
+
+    await conn.query(`CREATE TABLE IF NOT EXISTS compras_animais (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      vendedor_id INT,
+      numero_gta VARCHAR(50),
+      numero_compra VARCHAR(10),
+      sexo VARCHAR(50),
+      faixa_etaria VARCHAR(50),
+      quantidade INT NOT NULL,
+      valor_kg DECIMAL(10,2) DEFAULT 0,
+      data DATE NOT NULL,
+      observacao TEXT,
+      criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (vendedor_id) REFERENCES vendedores(id) ON DELETE SET NULL
+    )`);
+
+    await conn.query(`CREATE TABLE IF NOT EXISTS animais (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      compra_id INT,
+      brinco VARCHAR(100),
+      peso_entrada DECIMAL(10,2),
+      observacao TEXT,
+      status VARCHAR(50) DEFAULT 'ativo',
+      tipo_cadastro VARCHAR(50) DEFAULT 'compra',
+      nome_pai VARCHAR(255),
+      nome_mae VARCHAR(255),
+      raca VARCHAR(100),
+      data_nascimento DATE,
+      valor_total DECIMAL(10,2),
+      valor_venda DECIMAL(10,2),
+      data_saida DATE,
+      causa_morte VARCHAR(255),
+      criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (compra_id) REFERENCES compras_animais(id) ON DELETE SET NULL
+    )`);
+
+    await conn.query(`CREATE TABLE IF NOT EXISTS compras_insumos (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      vendedor_id INT,
+      produto VARCHAR(255) NOT NULL,
+      quantidade INT NOT NULL,
+      valor DECIMAL(10,2) NOT NULL,
+      nota_fiscal VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (vendedor_id) REFERENCES vendedores(id) ON DELETE SET NULL
+    )`);
+
+    const [rows] = await conn.query('SELECT COUNT(*) as total FROM categorias_insumos');
+    if (rows[0].total === 0) {
+      await conn.query(`INSERT INTO categorias_insumos (nome, slug) VALUES
+        ('Alimentação', 'alimentacao'),
+        ('Saúde', 'saude'),
+        ('Solo/Pasto', 'solo_pasto')`);
+    }
+
+    console.log('✅ Tabelas verificadas/criadas com sucesso!');
+  } catch (err) {
+    console.error('Erro ao inicializar banco:', err.message);
+  }
+}
+initDB();
 
 // ==============================
 // USUÁRIOS
