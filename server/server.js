@@ -8,7 +8,7 @@ require('dotenv').config();
 const db = require('./db');
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
 app.use(express.json());
 
 // ==============================
@@ -42,31 +42,6 @@ db.promise().query(`
     FOREIGN KEY (vendedor_id) REFERENCES vendedores(id) ON DELETE SET NULL
   )
 `).catch(err => console.error('Erro ao criar tabela compras_insumos:', err.message));
-
-// ==============================
-// DEV — LIMPAR BANCO
-// ==============================
-app.delete('/api/dev/limpar-tudo', autenticar, async (req, res) => {
-  try {
-    await db.promise().query('SET FOREIGN_KEY_CHECKS = 0');
-    await db.promise().query('TRUNCATE TABLE animais');
-    await db.promise().query('TRUNCATE TABLE compras_animais');
-    await db.promise().query('TRUNCATE TABLE movimentacoes_insumos');
-    await db.promise().query('TRUNCATE TABLE insumos');
-    await db.promise().query('TRUNCATE TABLE vendedores');
-    await db.promise().query('TRUNCATE TABLE categorias_insumos');
-    await db.promise().query(`INSERT INTO categorias_insumos (nome, slug) VALUES 
-      ('Alimentação', 'alimentacao'),
-      ('Saúde', 'saude'),
-      ('Solo/Pasto', 'solo_pasto')`);
-    await db.promise().query('SET FOREIGN_KEY_CHECKS = 1');
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Erro ao limpar banco:', err);
-    await db.promise().query('SET FOREIGN_KEY_CHECKS = 1').catch(() => {});
-    res.status(500).json({ error: 'Erro ao limpar banco.' });
-  }
-});
 
 // ==============================
 // USUÁRIOS
