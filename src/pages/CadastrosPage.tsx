@@ -1,21 +1,19 @@
 // ==============================
-// CadastrosPage.tsx — Hub central de cadastros
+// CadastrosPage.tsx — Hub central de compras
 // ==============================
 import { useNavigate } from "react-router-dom";
-import { UserPlus, Package, PawPrint, DollarSign } from "lucide-react";
+import { Package, PawPrint } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 
 const options = [
-  { icon: UserPlus, label: "Novo Vendedor", desc: "Cadastrar um novo vendedor", route: "/cadastros/novo-vendedor" },
-  { icon: Package, label: "Novos Insumos", desc: "Cadastrar e gerenciar insumos", route: "/insumos" },
-  { icon: PawPrint, label: "Novos Animais", desc: "Registrar compra de animais", route: "/animais/nova-compra" },
-  { icon: DollarSign, label: "Nova Venda", desc: "Registrar uma nova venda", route: "/cadastros/nova-venda" },
+  { icon: Package, label: "Comprar Insumos", desc: "Registrar compra de insumos", route: "/insumos" },
+  { icon: PawPrint, label: "Comprar Animais", desc: "Registrar compra de animais", route: "/animais/nova-compra" },
 ];
 
 const CadastrosPage = () => {
   const navigate = useNavigate();
   return (
-    <AppLayout title="Cadastros">
+    <AppLayout title="Compras">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {options.map((opt) => (
           <button

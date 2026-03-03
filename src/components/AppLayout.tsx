@@ -20,13 +20,14 @@ import mascotImg from "@/assets/mascot.png";
 const navItems = [
   { icon: Home,         label: "Dashboard",          route: "/dashboard" },
   { icon: PawPrint,     label: "Animais",             route: "/animais" },
-  { icon: ShoppingCart, label: "Cadastros",           route: "/cadastros" },
+  { icon: ShoppingCart, label: "Compras",             route: "/cadastros" },
   { icon: BarChart3,    label: "Relatórios",          route: "/relatorios" },
 ];
 
 const secondaryItems = [
   { icon: Boxes,    label: "Estoque de Insumos", route: "/insumos/estoque" },
-  { icon: TrendingUp, label: "Animais Vendidos", route: "/dashboard" },
+  { icon: TrendingUp, label: "Animais Vendidos", route: "/cadastros/nova-venda" },
+  { icon: User,     label: "Novo Vendedor",      route: "/cadastros/novo-vendedor" },
   { icon: Edit,     label: "Editar Cadastro",    route: "/editar-cadastro" },
   { icon: Lock,     label: "Alterar Senha",      route: "/dashboard" },
 ];
@@ -38,7 +39,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "/animais/novo":            "Novo Animal",
   "/animais/nova-compra":     "Nova Compra",
   "/animais/cadastro-especial":"Cadastro Especial",
-  "/cadastros":               "Cadastros",
+  "/cadastros":               "Compras",
   "/cadastros/novo-vendedor": "Novo Vendedor",
   "/cadastros/novo-pasto":    "Novo Pasto",
   "/compras-animais":         "Compras",
@@ -51,7 +52,7 @@ const ROUTE_LABELS: Record<string, string> = {
 
 const SECTION_LABEL: Record<string, string> = {
   "/animais":     "Animais",
-  "/cadastros":   "Cadastros",
+  "/cadastros":   "Compras",
   "/relatorios":  "Relatórios",
   "/insumos":     "Insumos",
   "/compras":     "Compras",
