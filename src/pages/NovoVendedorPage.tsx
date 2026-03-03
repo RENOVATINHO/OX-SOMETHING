@@ -1,32 +1,34 @@
-// ==============================
-// NovoVendedorPage.tsx — Cadastro de vendedor
-// ==============================
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, FileText, Phone, MapPin } from "lucide-react";
+import { User, FileText, Phone, MapPin, Building } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 
-const NovoVendedorPage = () => {
+interface CadastroFormProps {
+  titulo: string;
+  tipo: "vendedor" | "comprador";
+}
+
+const CadastroForm = ({ titulo, tipo }: CadastroFormProps) => {
   const navigate = useNavigate();
-  const [nome, setNome] = useState("");
-  const [documento, setDocumento] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [cidade, setCidade] = useState("");
+  const [form, setForm] = useState({ nome: "", documento: "", telefone: "", cidade: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!nome) { setError("Informe o nome do vendedor."); return; }
+    if (!form.nome) { setError("Informe o nome."); return; }
     setLoading(true);
     const token = localStorage.getItem("easy_cattle_token");
     try {
       const res = await fetch("http://localhost:3001/api/vendedores", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ nome, documento, telefone, cidade }),
+        body: JSON.stringify({ ...form, tipo }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Erro ao cadastrar."); return; }
@@ -39,37 +41,107 @@ const NovoVendedorPage = () => {
   };
 
   return (
-    <AppLayout title="Novo Vendedor">
-      <div className="max-w-lg">
-        <div className="bg-card rounded-2xl border border-border p-8">
-          <h2 className="text-xl font-bold text-foreground mb-6">Cadastrar vendedor</h2>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div className="flex items-center bg-background rounded-lg border border-border px-4 py-3">
-              <input type="text" placeholder="Nome *" value={nome} onChange={(e) => setNome(e.target.value)} required
-                className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-sm" />
-              <User size={18} className="text-muted-foreground" />
+    <div>
+      <form onSubmit={handleSubmit} className="dash-card space-y-0 divide-y divide-white/[0.06]">
+        {/* Nome */}
+        <div className="flex items-center gap-4 px-5 py-4">
+          <div className="flex-1">
+            <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Nome *</label>
+            <input
+              name="nome"
+              value={form.nome}
+              onChange={handleChange}
+              placeholder={tipo === "vendedor" ? "Ex: Agropecuária Silva" : "Ex: João Comprador"}
+              className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]"
+            />
+          </div>
+          <User size={20} className="text-[#8892b0] flex-shrink-0" />
+        </div>
+
+        {/* Documento + Telefone */}
+        <div className="grid grid-cols-2 divide-x divide-white/[0.06]">
+          <div className="px-5 py-4">
+            <label className="text-xs font-semibold text-[#8892b0] mb-1 block">CPF / CNPJ</label>
+            <div className="flex items-center gap-2">
+              <FileText size={14} className="text-[#8892b0]" />
+              <input
+                name="documento"
+                value={form.documento}
+                onChange={handleChange}
+                placeholder="Opcional"
+                className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]"
+              />
             </div>
-            <div className="flex items-center bg-background rounded-lg border border-border px-4 py-3">
-              <input type="text" placeholder="CPF / CNPJ" value={documento} onChange={(e) => setDocumento(e.target.value)}
-                className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-sm" />
-              <FileText size={18} className="text-muted-foreground" />
+          </div>
+          <div className="px-5 py-4">
+            <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Telefone</label>
+            <div className="flex items-center gap-2">
+              <Phone size={14} className="text-[#8892b0]" />
+              <input
+                name="telefone"
+                value={form.telefone}
+                onChange={handleChange}
+                placeholder="Opcional"
+                className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]"
+              />
             </div>
-            <div className="flex items-center bg-background rounded-lg border border-border px-4 py-3">
-              <input type="text" placeholder="Telefone" value={telefone} onChange={(e) => setTelefone(e.target.value)}
-                className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-sm" />
-              <Phone size={18} className="text-muted-foreground" />
+          </div>
+        </div>
+
+        {/* Cidade */}
+        <div className="px-5 py-4">
+          <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Cidade</label>
+          <div className="flex items-center gap-2">
+            <MapPin size={14} className="text-[#8892b0]" />
+            <input
+              name="cidade"
+              value={form.cidade}
+              onChange={handleChange}
+              placeholder="Opcional"
+              className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]"
+            />
+          </div>
+        </div>
+      </form>
+
+      {error && <p className="text-sm text-red-400 text-center mt-3">{error}</p>}
+
+      <button
+        onClick={handleSubmit as any}
+        disabled={loading || !form.nome}
+        className="w-full mt-4 py-3.5 rounded-2xl text-white font-bold text-sm transition-all disabled:opacity-40"
+        style={{ background: "linear-gradient(135deg, #7c3aed, #e040fb)" }}
+      >
+        {loading ? "Cadastrando..." : titulo}
+      </button>
+    </div>
+  );
+};
+
+const NovoVendedorPage = () => {
+  return (
+    <AppLayout title="Novo Cadastro">
+      <div className="max-w-2xl mx-auto space-y-8">
+        {/* Vendedor */}
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "#ff6b3518" }}>
+              <User size={18} className="text-[#ff6b35]" />
             </div>
-            <div className="flex items-center bg-background rounded-lg border border-border px-4 py-3">
-              <input type="text" placeholder="Cidade" value={cidade} onChange={(e) => setCidade(e.target.value)}
-                className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-sm" />
-              <MapPin size={18} className="text-muted-foreground" />
+            <h2 className="text-base font-bold text-white font-exo2">Cadastrar Vendedor</h2>
+          </div>
+          <CadastroForm titulo="Cadastrar vendedor" tipo="vendedor" />
+        </div>
+
+        {/* Comprador */}
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "#7c3aed18" }}>
+              <Building size={18} className="text-[#7c3aed]" />
             </div>
-            {error && <p className="text-sm text-destructive text-center">{error}</p>}
-            <button type="submit" disabled={loading}
-              className="w-full bg-primary text-primary-foreground rounded-lg py-3 text-base font-bold hover:bg-accent transition-colors disabled:opacity-60 mt-2">
-              {loading ? "Cadastrando..." : "Cadastrar vendedor"}
-            </button>
-          </form>
+            <h2 className="text-base font-bold text-white font-exo2">Cadastrar Comprador</h2>
+          </div>
+          <CadastroForm titulo="Cadastrar comprador" tipo="comprador" />
         </div>
       </div>
     </AppLayout>
