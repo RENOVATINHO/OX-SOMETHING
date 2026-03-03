@@ -26,10 +26,9 @@ const navItems = [
 
 const secondaryItems = [
   { icon: Boxes,    label: "Estoque de Insumos", route: "/insumos/estoque" },
-  { icon: TrendingUp, label: "Animais Vendidos", route: "/cadastros/nova-venda" },
+  { icon: TrendingUp, label: "Animais Vendidos", route: "/nova-venda" },
   { icon: User,     label: "Novo Vendedor",      route: "/cadastros/novo-vendedor" },
   { icon: Edit,     label: "Editar Cadastro",    route: "/editar-cadastro" },
-  { icon: Lock,     label: "Alterar Senha",      route: "/dashboard" },
 ];
 
 // ── Breadcrumb helper ──────────────────────────────────────────────────────
@@ -233,7 +232,10 @@ const AppLayout = ({ children, title }: AppLayoutProps) => {
             <div className="w-8 h-px bg-white/8 mb-1" />
             <button
               title="Configurações"
-              className="w-10 h-10 flex items-center justify-center rounded-xl text-[#8892b0] hover:text-white hover:bg-white/5 transition-all"
+              onClick={() => handleNav("/configuracoes")}
+              className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${
+                isActive("/configuracoes") ? "text-[#ff6b35]" : "text-[#8892b0] hover:text-white hover:bg-white/5"
+              }`}
             >
               <Settings size={18} />
             </button>
