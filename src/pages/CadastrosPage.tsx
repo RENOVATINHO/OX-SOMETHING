@@ -2,7 +2,7 @@
 // CadastrosPage.tsx — Hub central de cadastros
 // ==============================
 import { useNavigate } from "react-router-dom";
-import { UserPlus, Package, PawPrint, DollarSign, Fence } from "lucide-react";
+import { UserPlus, Package, PawPrint, DollarSign } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 
 const options = [
@@ -10,7 +10,6 @@ const options = [
   { icon: Package, label: "Novos Insumos", desc: "Cadastrar e gerenciar insumos", route: "/insumos" },
   { icon: PawPrint, label: "Novos Animais", desc: "Registrar compra de animais", route: "/animais/nova-compra" },
   { icon: DollarSign, label: "Nova Venda", desc: "Registrar uma nova venda", route: "/cadastros/nova-venda" },
-  { icon: Fence, label: "Novo Pasto", desc: "Cadastrar um novo pasto", route: "/cadastros/novo-pasto" },
 ];
 
 const CadastrosPage = () => {

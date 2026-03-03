@@ -20,7 +20,6 @@ import RelatoriosPage from "./pages/RelatoriosPage";
 import ComprasAnimaisListPage from "./pages/ComprasAnimaisListPage";
 import CadastrosPage from "./pages/CadastrosPage";
 import NovoVendedorPage from "./pages/NovoVendedorPage";
-import NovoPastoPage from "./pages/NovoPastoPage";
 import NotFound from "./pages/NotFound";
 import CadastrarSePage from "./pages/CadastrarSePage";
 import EditarCadastroPage from "./pages/EditarCadastroPage";
@@ -45,8 +44,7 @@ const App = () => (
             <Route path="/animais/novo" element={<NovoAnimalPage />} />
             <Route path="/cadastros" element={<CadastrosPage />} />
             <Route path="/cadastros/novo-vendedor" element={<NovoVendedorPage />} />
-            <Route path="/cadastros/novo-pasto" element={<NovoPastoPage />} />
-            <Route path="/compras-animais" element={<ComprasAnimaisListPage />} />
+<Route path="/compras-animais" element={<ComprasAnimaisListPage />} />
             <Route path="/animais/nova-compra" element={<NovaCompraAnimaisPage />} />
             <Route path="/animais/cadastro-especial" element={<NovaCompraEspecialPage />} />
             <Route path="/relatorios" element={<RelatoriosPage />} />

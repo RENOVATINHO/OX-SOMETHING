@@ -28,6 +28,22 @@ const autenticar = (req, res, next) => {
 };
 
 // ==============================
+// INIT — Cria tabelas que podem não existir ainda
+// ==============================
+db.promise().query(`
+  CREATE TABLE IF NOT EXISTS compras_insumos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    vendedor_id INT,
+    produto VARCHAR(255) NOT NULL,
+    quantidade INT NOT NULL,
+    valor DECIMAL(10,2) NOT NULL,
+    nota_fiscal VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (vendedor_id) REFERENCES vendedores(id) ON DELETE SET NULL
+  )
+`).catch(err => console.error('Erro ao criar tabela compras_insumos:', err.message));
+
+// ==============================
 // DEV — LIMPAR BANCO
 // ==============================
 app.delete('/api/dev/limpar-tudo', autenticar, async (req, res) => {
@@ -469,6 +485,39 @@ app.put('/api/animais/:id/morte', autenticar, (req, res) => {
     (err) => {
       if (err) return res.status(500).json({ error: 'Erro ao registrar morte.' });
       res.json({ success: true });
+    }
+  );
+});
+
+// ==============================
+// COMPRAS DE INSUMOS
+// ==============================
+
+// GET /api/compras-insumos
+app.get('/api/compras-insumos', autenticar, (_req, res) => {
+  db.query(
+    `SELECT ci.*, v.nome as vendedor_nome
+     FROM compras_insumos ci
+     LEFT JOIN vendedores v ON ci.vendedor_id = v.id
+     ORDER BY ci.id DESC`,
+    (err, results) => {
+      if (err) return res.status(500).json({ error: 'Erro ao buscar compras de insumos.' });
+      res.json(results);
+    }
+  );
+});
+
+// POST /api/compras-insumos
+app.post('/api/compras-insumos', autenticar, (req, res) => {
+  const { vendedor_id, produto, quantidade, valor, nota_fiscal } = req.body;
+  if (!produto || !quantidade || !valor)
+    return res.status(400).json({ error: 'Produto, quantidade e valor são obrigatórios.' });
+  db.query(
+    'INSERT INTO compras_insumos (vendedor_id, produto, quantidade, valor, nota_fiscal) VALUES (?, ?, ?, ?, ?)',
+    [vendedor_id || null, produto, Number(quantidade), Number(valor), nota_fiscal || null],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: 'Erro ao registrar compra de insumo.' });
+      res.status(201).json({ id: result.insertId, message: 'Compra de insumo registrada.' });
     }
   );
 });

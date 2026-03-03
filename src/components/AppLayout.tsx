@@ -9,7 +9,7 @@ import { ReactNode, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Home, PawPrint, ShoppingCart, BarChart3, User, LogOut,
-  TrendingUp, Edit, Lock, ArrowLeft, Boxes, Trash2, Skull,
+  TrendingUp, Edit, Lock, ArrowLeft, Boxes, Skull,
   Settings, Menu, X, Search, Bell,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -225,19 +225,6 @@ const AppLayout = ({ children, title }: AppLayoutProps) => {
               />
             ))}
 
-            {/* Limpar banco */}
-            <button
-              onClick={() => { setModalLimpar(true); setConfirmTexto(""); setSucesso(false); }}
-              title="Limpar banco"
-              className="w-10 h-10 flex items-center justify-center rounded-xl text-red-400/60 hover:text-red-400 hover:bg-red-500/10 transition-all group relative"
-            >
-              <Trash2 size={18} />
-              <span className="absolute left-14 top-1/2 -translate-y-1/2 bg-[#1f2b4a] text-white text-xs font-semibold
-                px-2.5 py-1 rounded-lg border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100
-                pointer-events-none transition-opacity duration-150 z-50 shadow-xl">
-                Limpar banco
-              </span>
-            </button>
           </nav>
 
           {/* Bottom: settings + logout */}
@@ -305,12 +292,6 @@ const AppLayout = ({ children, title }: AppLayoutProps) => {
                 <DrawerItem key={item.label} icon={item.icon} label={item.label}
                   isActive={isActive(item.route) && item.route !== "/dashboard"} onClick={() => handleNav(item.route)} />
               ))}
-              <button
-                onClick={() => { setModalLimpar(true); setConfirmTexto(""); setSucesso(false); setDrawerOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-all"
-              >
-                <Trash2 size={18} /> Limpar banco
-              </button>
             </nav>
 
             {/* Footer */}

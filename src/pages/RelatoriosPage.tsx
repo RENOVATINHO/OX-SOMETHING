@@ -7,26 +7,26 @@
 import { useState, useEffect, useCallback } from "react";
 import { PawPrint, Calendar, DollarSign, Download, ChevronRight, ChevronDown, FileSpreadsheet, Loader2 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
-import { supabase } from "@/integrations/supabase/client";
+const API = "http://localhost:3001";
 
 // ──────────────────────────────────────────────────────────────────────────────
-// TYPES (unchanged)
+// TYPES
 // ──────────────────────────────────────────────────────────────────────────────
 interface CompraAnimal {
-  id: string;
-  lote: string;
+  id: number;
+  lote: string;        // mapeado de numero_compra
   sexo: string;
   faixa_etaria: string;
   quantidade: number;
-  valor_unitario: number;
+  valor_unitario: number; // mapeado de valor_kg
   numero_gta: string | null;
   observacao: string | null;
-  created_at: string;
+  created_at: string;  // mapeado de data
   vendedor_nome: string | null;
 }
 
 interface CompraInsumo {
-  id: string;
+  id: number;
   produto: string;
   quantidade: number;
   valor: number;
@@ -106,33 +106,44 @@ const RelatoriosPage = () => {
   const [comprasInsumos, setComprasInsumos] = useState<CompraInsumo[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const token = localStorage.getItem("easy_cattle_token");
+
   const fetchComprasAnimais = useCallback(async () => {
     setLoading(true);
-    const { data: compras, error: errCompras } = await supabase
-      .from("compras_animais")
-      .select("*")
-      .order("created_at", { ascending: false });
-    const { data: vendedores } = await supabase.from("vendedores").select("id, nome");
-    const vendMap = new Map((vendedores || []).map(v => [v.id, v.nome]));
-    if (!errCompras && compras) {
-      setComprasAnimais(compras.map(c => ({ ...c, vendedor_nome: c.vendedor_id ? vendMap.get(c.vendedor_id) || "—" : "—" })));
-    }
+    try {
+      const res = await fetch(`${API}/api/compras-animais`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setComprasAnimais(data.map((c: Record<string, unknown>) => ({
+          id: c.id as number,
+          lote: String(c.numero_compra ?? ""),
+          sexo: c.sexo as string,
+          faixa_etaria: c.faixa_etaria as string,
+          quantidade: c.quantidade as number,
+          valor_unitario: Number(c.valor_kg ?? 0),
+          numero_gta: (c.numero_gta as string | null) ?? null,
+          observacao: (c.observacao as string | null) ?? null,
+          created_at: String(c.data ?? ""),
+          vendedor_nome: (c.vendedor_nome as string | null) ?? null,
+        })));
+      }
+    } catch { /* silently ignore */ }
     setLoading(false);
-  }, []);
+  }, [token]);
 
   const fetchComprasInsumos = useCallback(async () => {
     setLoading(true);
-    const { data: compras, error: errCompras } = await supabase
-      .from("compras_insumos")
-      .select("*")
-      .order("created_at", { ascending: false });
-    const { data: vendedores } = await supabase.from("vendedores").select("id, nome");
-    const vendMap = new Map((vendedores || []).map(v => [v.id, v.nome]));
-    if (!errCompras && compras) {
-      setComprasInsumos(compras.map(c => ({ ...c, vendedor_nome: c.vendedor_id ? vendMap.get(c.vendedor_id) || "—" : "—" })));
-    }
+    try {
+      const res = await fetch(`${API}/api/compras-insumos`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) setComprasInsumos(data);
+    } catch { /* silently ignore */ }
     setLoading(false);
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     if (activeTab === "compras-animais" || activeTab === "animais-propriedade") fetchComprasAnimais();

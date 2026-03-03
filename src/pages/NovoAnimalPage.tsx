@@ -8,7 +8,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import AppLayout from "@/components/AppLayout";
 
 // Tipo que representa os dados de um lote — obtidos da tabela compras_animais
@@ -30,17 +29,24 @@ const NovoAnimalPage = () => {
   });
 
   // Carrega lotes únicos da tabela compras_animais ao montar o componente
-  // Usa reduce para deduplicar por nome do lote (pode haver múltiplas compras com mesmo lote)
   useEffect(() => {
-    supabase.from("compras_animais").select("lote, sexo, faixa_etaria").then(({ data }) => {
-      if (data) {
-        const unique = data.reduce((acc: Lote[], item) => {
-          if (!acc.find(l => l.lote === item.lote)) acc.push(item); // Mantém apenas o primeiro registro de cada lote
-          return acc;
-        }, []);
-        setLotes(unique);
-      }
-    });
+    const token = localStorage.getItem("easy_cattle_token");
+    fetch("http://localhost:3001/api/compras-animais", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.json())
+      .then((data: Record<string, unknown>[]) => {
+        if (Array.isArray(data)) {
+          const unique = data.reduce((acc: Lote[], c) => {
+            const key = String(c.numero_compra ?? "");
+            if (!acc.find(l => l.lote === key))
+              acc.push({ lote: key, sexo: c.sexo as string, faixa_etaria: c.faixa_etaria as string });
+            return acc;
+          }, []);
+          setLotes(unique);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Busca os dados do lote selecionado para preencher campos automáticos (sexo e idade)
