@@ -193,7 +193,7 @@ const RelatoriosPage = () => {
 
       {/* ── Report selection cards ─────────────────────────────────────────── */}
       {!activeTab && (
-        <div className="max-w-3xl grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4">
           {reports.map((report, i) => (
             <button
               key={report.id}

@@ -143,7 +143,7 @@ const EstoqueInsumosPage = () => {
 
   return (
     <AppLayout title="Estoque de Insumos">
-      <div className="max-w-6xl space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
 
         {/* Cards de resumo */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
