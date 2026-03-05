@@ -524,17 +524,46 @@ app.put('/api/animais/:id', autenticar, (req, res) => {
 
 app.get('/api/animais/stats', autenticar, (req, res) => {
   db.query(
-    `SELECT 
+    `SELECT
       COUNT(*) as total,
-      SUM(CASE WHEN ca.sexo = 'femea' AND a.status = 'ativo' THEN 1 ELSE 0 END) as matrizes,
-      SUM(CASE WHEN ca.sexo = 'macho_inteiro' AND a.status = 'ativo' THEN 1 ELSE 0 END) as reprodutores,
-      SUM(CASE WHEN ca.faixa_etaria = 'bezerro' AND a.status = 'ativo' THEN 1 ELSE 0 END) as bezerros
+      SUM(CASE WHEN ca.sexo = 'macho_capado' AND a.status = 'ativo' THEN 1 ELSE 0 END) as bois,
+      SUM(CASE WHEN ca.sexo = 'macho_inteiro' AND ca.faixa_etaria != 'adulto' AND a.status = 'ativo' THEN 1 ELSE 0 END) as garrotes,
+      SUM(CASE
+        WHEN a.tipo_cadastro = 'especial' THEN COALESCE(a.valor_total, 0)
+        ELSE COALESCE(a.peso_entrada * ca.valor_kg, 0)
+      END) as valor_total_rebanho
      FROM animais a
      LEFT JOIN compras_animais ca ON a.compra_id = ca.id
      WHERE a.status = 'ativo'`,
     (err, results) => {
       if (err) return res.status(500).json({ error: 'Erro ao buscar estatísticas.' });
       res.json(results[0]);
+    }
+  );
+});
+
+app.get('/api/animais/historico-valor', autenticar, (req, res) => {
+  db.query(
+    `SELECT
+      DATE_FORMAT(a.criado_em, '%Y-%m') as mes_ordem,
+      DATE_FORMAT(a.criado_em, '%b/%y') as mes_label,
+      SUM(CASE
+        WHEN a.tipo_cadastro = 'especial' THEN COALESCE(a.valor_total, 0)
+        ELSE COALESCE(a.peso_entrada * ca.valor_kg, 0)
+      END) as valor_periodo
+    FROM animais a
+    LEFT JOIN compras_animais ca ON a.compra_id = ca.id
+    GROUP BY mes_ordem, mes_label
+    ORDER BY mes_ordem ASC
+    LIMIT 24`,
+    (err, results) => {
+      if (err) return res.status(500).json({ error: 'Erro ao buscar histórico.' });
+      let acumulado = 0;
+      const dados = results.map(r => {
+        acumulado += parseFloat(r.valor_periodo || 0);
+        return { mes: r.mes_label, valor: Math.round(acumulado) };
+      });
+      res.json(dados);
     }
   );
 });
