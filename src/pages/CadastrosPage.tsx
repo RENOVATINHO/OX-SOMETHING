@@ -2,7 +2,7 @@
 // CadastrosPage.tsx — Hub central de compras
 // ==============================
 import { useNavigate } from "react-router-dom";
-import { Package, PawPrint } from "lucide-react";
+import { Package, PawPrint, ShoppingCart } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 
 const options = [
@@ -14,20 +14,32 @@ const CadastrosPage = () => {
   const navigate = useNavigate();
   return (
     <AppLayout title="Compras">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {options.map((opt) => (
-          <button
-            key={opt.label}
-            onClick={() => navigate(opt.route)}
-            className="bg-card rounded-xl border border-border p-6 text-left hover:shadow-md hover:border-primary/30 transition-all group"
-          >
-            <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-              <opt.icon size={24} className="text-primary" />
-            </div>
-            <p className="font-bold text-foreground text-sm">{opt.label}</p>
-            <p className="text-xs text-muted-foreground mt-1">{opt.desc}</p>
-          </button>
-        ))}
+      <div className="max-w-2xl mx-auto">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "#7c3aed18" }}>
+            <ShoppingCart size={18} className="text-[#7c3aed]" />
+          </div>
+          <h2 className="text-base font-bold text-white font-exo2">Compras</h2>
+        </div>
+
+        <div className="dash-card divide-y divide-white/[0.06]">
+          {options.map((opt) => (
+            <button
+              key={opt.label}
+              onClick={() => navigate(opt.route)}
+              className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-white/[0.03] transition-colors group"
+            >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors" style={{ background: "#7c3aed18" }}>
+                <opt.icon size={20} className="text-[#7c3aed]" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-white">{opt.label}</p>
+                <p className="text-xs text-[#8892b0] mt-0.5">{opt.desc}</p>
+              </div>
+              <span className="text-[#8892b0] text-lg">›</span>
+            </button>
+          ))}
+        </div>
       </div>
     </AppLayout>
   );
