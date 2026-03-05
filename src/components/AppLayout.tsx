@@ -19,22 +19,22 @@ import mascotImg from "@/assets/mascot.png";
 // ── Nav items ──────────────────────────────────────────────────────────────
 const navItems = [
   { icon: Home,         label: "Dashboard",          route: "/dashboard" },
-  { icon: PawPrint,     label: "Animais",             route: "/animais" },
+  { icon: PawPrint,     label: "Rebanho",             route: "/animais" },
   { icon: ShoppingCart, label: "Compras",             route: "/cadastros" },
   { icon: BarChart3,    label: "Relatórios",          route: "/relatorios" },
 ];
 
 const secondaryItems = [
-  { icon: Boxes,    label: "Estoque de Insumos", route: "/insumos/estoque" },
-  { icon: TrendingUp, label: "Animais Vendidos", route: "/nova-venda" },
-  { icon: User,     label: "Novo Vendedor",      route: "/cadastros/novo-vendedor" },
-  { icon: Edit,     label: "Editar Cadastro",    route: "/editar-cadastro" },
+  { icon: Boxes,    label: "Estoque de Insumos",  route: "/insumos/estoque" },
+  { icon: TrendingUp, label: "Vendas do Rebanho", route: "/nova-venda" },
+  { icon: User,     label: "Novo Vendedor",        route: "/cadastros/novo-vendedor" },
+  { icon: Edit,     label: "Editar Cadastro",      route: "/editar-cadastro" },
 ];
 
 // ── Breadcrumb helper ──────────────────────────────────────────────────────
 const ROUTE_LABELS: Record<string, string> = {
   "/dashboard":               "Dashboard",
-  "/animais":                 "Animais",
+  "/animais":                 "Rebanho",
   "/animais/novo":            "Novo Animal",
   "/animais/nova-compra":     "Nova Compra",
   "/animais/cadastro-especial":"Cadastro Especial",
@@ -50,7 +50,7 @@ const ROUTE_LABELS: Record<string, string> = {
 };
 
 const SECTION_LABEL: Record<string, string> = {
-  "/animais":     "Animais",
+  "/animais":     "Rebanho",
   "/cadastros":   "Compras",
   "/relatorios":  "Relatórios",
   "/insumos":     "Insumos",
