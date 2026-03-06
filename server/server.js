@@ -55,6 +55,15 @@ async function initDB() {
       criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
 
+    await conn.query(`CREATE TABLE IF NOT EXISTS reset_tokens (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      email VARCHAR(255) NOT NULL,
+      token VARCHAR(8) NOT NULL,
+      expira DATETIME NOT NULL,
+      usado TINYINT DEFAULT 0,
+      criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+
     await conn.query(`CREATE TABLE IF NOT EXISTS categorias_insumos (
       id INT AUTO_INCREMENT PRIMARY KEY,
       nome VARCHAR(255) NOT NULL,
@@ -149,6 +158,16 @@ async function initDB() {
     // Migração: renomear faixa_etaria 'novilho' → 'boi' para padronização
     await conn.query(`UPDATE compras_animais SET faixa_etaria = 'boi' WHERE faixa_etaria = 'novilho'`);
 
+    // Migração: adicionar coluna tipo em vendedores se não existir
+    try {
+      await conn.query(`ALTER TABLE vendedores ADD COLUMN tipo VARCHAR(20) DEFAULT 'vendedor'`);
+      console.log('✅ Coluna tipo adicionada em vendedores.');
+    } catch (e) {
+      if (!e.message.includes('Duplicate column')) {
+        console.log('ℹ️ Coluna tipo já existe em vendedores.');
+      }
+    }
+
     console.log('✅ Tabelas verificadas/criadas com sucesso!');
   } catch (err) {
     console.error('Erro ao inicializar banco:', err.message);
@@ -196,6 +215,50 @@ app.post('/api/login', (req, res) => {
     );
     res.json({ token, nome: usuario.nome, nomePropriedade: usuario.nome_propriedade });
   });
+});
+
+// POST /api/esqueci-senha — gera código de reset de 6 dígitos (15 min de validade)
+app.post('/api/esqueci-senha', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Informe o email.' });
+  try {
+    const [rows] = await db.promise().query('SELECT id FROM usuarios WHERE email = ?', [email]);
+    // Sempre retorna sucesso para não revelar se o email existe
+    if (rows.length === 0) return res.json({ success: true });
+    // Gera código de 6 dígitos
+    const codigo = String(Math.floor(100000 + Math.random() * 900000));
+    const expira = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+    await db.promise().query(
+      'INSERT INTO reset_tokens (email, token, expira) VALUES (?, ?, ?)',
+      [email, codigo, expira]
+    );
+    // Retorna o código diretamente (app local sem email SMTP)
+    res.json({ success: true, codigo });
+  } catch (err) {
+    console.error('Erro esqueci-senha:', err);
+    res.status(500).json({ error: 'Erro ao gerar código de reset.' });
+  }
+});
+
+// POST /api/resetar-senha — valida código e atualiza senha
+app.post('/api/resetar-senha', async (req, res) => {
+  const { email, codigo, novaSenha } = req.body;
+  if (!email || !codigo || !novaSenha) return res.status(400).json({ error: 'Informe email, código e nova senha.' });
+  if (novaSenha.length < 6) return res.status(400).json({ error: 'A senha deve ter pelo menos 6 caracteres.' });
+  try {
+    const [rows] = await db.promise().query(
+      'SELECT * FROM reset_tokens WHERE email = ? AND token = ? AND usado = 0 AND expira > NOW() ORDER BY criado_em DESC LIMIT 1',
+      [email, codigo]
+    );
+    if (rows.length === 0) return res.status(400).json({ error: 'Código inválido ou expirado.' });
+    const senhaHash = await bcrypt.hash(novaSenha, 10);
+    await db.promise().query('UPDATE usuarios SET senha = ? WHERE email = ?', [senhaHash, email]);
+    await db.promise().query('UPDATE reset_tokens SET usado = 1 WHERE id = ?', [rows[0].id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Erro resetar-senha:', err);
+    res.status(500).json({ error: 'Erro ao redefinir senha.' });
+  }
 });
 
 app.get('/api/usuario', autenticar, (req, res) => {
@@ -379,17 +442,22 @@ app.post('/api/insumos/:id/saida', autenticar, (req, res) => {
 // VENDEDORES
 // ==============================
 app.get('/api/vendedores', autenticar, (req, res) => {
-  db.query('SELECT * FROM vendedores ORDER BY nome', (err, results) => {
-    if (err) return res.status(500).json({ error: 'Erro ao buscar vendedores.' });
+  const { tipo } = req.query;
+  const query = tipo
+    ? 'SELECT * FROM vendedores WHERE tipo = ? ORDER BY nome'
+    : 'SELECT * FROM vendedores ORDER BY nome';
+  const params = tipo ? [tipo] : [];
+  db.query(query, params, (err, results) => {
+    if (err) return res.status(500).json({ error: 'Erro ao buscar.' });
     res.json(results);
   });
 });
 
 app.post('/api/vendedores', autenticar, (req, res) => {
-  const { nome, documento, telefone, cidade } = req.body;
-  if (!nome) return res.status(400).json({ error: 'Informe o nome do vendedor.' });
-  db.query('INSERT INTO vendedores (nome, documento, telefone, cidade) VALUES (?, ?, ?, ?)',
-    [nome, documento || null, telefone || null, cidade || null],
+  const { nome, documento, telefone, cidade, tipo } = req.body;
+  if (!nome) return res.status(400).json({ error: 'Informe o nome.' });
+  db.query('INSERT INTO vendedores (nome, documento, telefone, cidade, tipo) VALUES (?, ?, ?, ?, ?)',
+    [nome, documento || null, telefone || null, cidade || null, tipo || 'vendedor'],
     (err, result) => {
       if (err) return res.status(500).json({ error: 'Erro ao cadastrar vendedor.' });
       res.status(201).json({ id: result.insertId, message: 'Vendedor cadastrado.' });
@@ -604,6 +672,57 @@ app.put('/api/animais/:id/venda', autenticar, (req, res) => {
       res.json({ success: true });
     }
   );
+});
+
+// POST /api/vendas-animais — venda em lote por critério (sexo + faixa_etaria + quantidade)
+app.post('/api/vendas-animais', autenticar, async (req, res) => {
+  const { comprador_nome, numero_gta_saida, finalidade_venda, sexo, faixa_etaria, quantidade, valor_venda, data_saida } = req.body;
+  if (!quantidade || Number(quantidade) < 1)
+    return res.status(400).json({ error: 'Informe a quantidade.' });
+  if (!valor_venda || Number(valor_venda) <= 0)
+    return res.status(400).json({ error: 'Informe o valor por cabeça.' });
+  try {
+    let whereExtra = '';
+    const params = [];
+    if (sexo) { whereExtra += ' AND ca.sexo = ?'; params.push(sexo); }
+    if (faixa_etaria) { whereExtra += ' AND ca.faixa_etaria = ?'; params.push(faixa_etaria); }
+    params.push(Number(quantidade));
+
+    const [animais] = await db.promise().query(
+      `SELECT a.id FROM animais a
+       LEFT JOIN compras_animais ca ON a.compra_id = ca.id
+       WHERE a.status = 'ativo'${whereExtra}
+       LIMIT ?`,
+      params
+    );
+
+    if (animais.length === 0)
+      return res.status(400).json({ error: 'Nenhum animal disponível com esses critérios.' });
+    if (animais.length < Number(quantidade))
+      return res.status(400).json({
+        error: `Apenas ${animais.length} animal(is) disponível(eis) com esses critérios.`,
+        disponivel: animais.length
+      });
+
+    const ids = animais.map(a => a.id);
+    const partes = [
+      comprador_nome ? `Comprador: ${comprador_nome}` : null,
+      numero_gta_saida ? `GTA Saída: ${numero_gta_saida}` : null,
+      finalidade_venda ? `Finalidade: ${finalidade_venda}` : null,
+    ].filter(Boolean).join(' | ');
+    const dataVenda = data_saida || new Date().toISOString().split('T')[0];
+
+    await db.promise().query(
+      `UPDATE animais SET status='vendido', valor_venda=?, data_saida=?,
+       observacao=CONCAT(COALESCE(observacao,''), CASE WHEN observacao IS NOT NULL AND observacao != '' THEN ' | ' ELSE '' END, ?)
+       WHERE id IN (?)`,
+      [valor_venda, dataVenda, partes, ids]
+    );
+    res.json({ success: true, vendidos: ids.length });
+  } catch (err) {
+    console.error('Erro em vendas-animais:', err);
+    res.status(500).json({ error: 'Erro ao registrar venda.' });
+  }
 });
 
 app.put('/api/animais/:id/morte', autenticar, (req, res) => {

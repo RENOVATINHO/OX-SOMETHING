@@ -179,7 +179,7 @@ const InsumosPage = () => {
 
   return (
     <AppLayout title="Insumos">
-      <div className="max-w-6xl">
+      <div className="max-w-6xl mx-auto">
 
         <div className="flex items-center gap-3 mb-6 flex-wrap">
           <div className="flex-1 flex items-center bg-card border border-border rounded-lg px-4 py-3 gap-2 min-w-48">

@@ -16,8 +16,12 @@ import celeiroIcon from "@/assets/celeiro.png";
 
 interface AnimalStats {
   total: number;
-  bois: number;
+  reprodutores: number;
+  matrizes: number;
   garrotes: number;
+  bois: number;
+  novilhas: number;
+  bezerros: number;
   valorTotal: number;
 }
 
@@ -215,7 +219,7 @@ const DashboardPage = () => {
   const { user } = useAuth();
 
   const [animalStats, setAnimalStats] = useState<AnimalStats>({
-    total: 0, bois: 0, garrotes: 0, valorTotal: 0,
+    total: 0, reprodutores: 0, matrizes: 0, garrotes: 0, bois: 0, novilhas: 0, bezerros: 0, valorTotal: 0,
   });
   const [historicoValor, setHistoricoValor] = useState<{ mes: string; valor: number }[]>([]);
 
@@ -227,8 +231,12 @@ const DashboardPage = () => {
       .then(r => r.json())
       .then(data => setAnimalStats({
         total: data.total || 0,
-        bois: data.bois || 0,
+        reprodutores: data.reprodutores || 0,
+        matrizes: data.matrizes || 0,
         garrotes: data.garrotes || 0,
+        bois: data.bois || 0,
+        novilhas: data.novilhas || 0,
+        bezerros: data.bezerros || 0,
         valorTotal: Math.round(data.valor_total_rebanho || 0),
       }))
       .catch(() => {});
@@ -241,10 +249,14 @@ const DashboardPage = () => {
 
   const total = Math.max(animalStats.total, 1);
 
+  // 6 anéis — composição completa do rebanho
   const ringData = [
-    { label: "Rebanho Total", value: 100,                                              total: animalStats.total,    color: "#ff6b35" },
-    { label: "Bois",          value: Math.round((animalStats.bois / total) * 100),     total: animalStats.bois,     color: "#7c3aed" },
-    { label: "Garrotes",      value: Math.round((animalStats.garrotes / total) * 100), total: animalStats.garrotes, color: "#00e5ff" },
+    { label: "Total",        value: 100,                                                           total: animalStats.total,        color: "#ff6b35" },
+    { label: "Reprodutores", value: Math.round((animalStats.reprodutores / total) * 100),          total: animalStats.reprodutores, color: "#fbbf24" },
+    { label: "Matrizes",     value: Math.round((animalStats.matrizes     / total) * 100),          total: animalStats.matrizes,     color: "#e040fb" },
+    { label: "Garrotes",     value: Math.round((animalStats.garrotes     / total) * 100),          total: animalStats.garrotes,     color: "#00e5ff" },
+    { label: "Bois",         value: Math.round((animalStats.bois         / total) * 100),          total: animalStats.bois,         color: "#7c3aed" },
+    { label: "Bezerros/as",  value: Math.round((animalStats.bezerros     / total) * 100),          total: animalStats.bezerros,     color: "#34d399" },
   ];
 
   const kpiCards = [
@@ -254,16 +266,16 @@ const DashboardPage = () => {
       pct: null, progressPct: 100,
     },
     {
-      label: "Bois", value: animalStats.bois,
-      icon: BarChart3, color: "#7c3aed", gradient: "linear-gradient(90deg, #7c3aed, transparent)",
-      pct: animalStats.total > 0 ? Math.round((animalStats.bois / animalStats.total) * 100) : null,
-      progressPct: animalStats.total > 0 ? Math.round((animalStats.bois / animalStats.total) * 100) : 0,
+      label: "Reprodutores + Matrizes", value: animalStats.reprodutores + animalStats.matrizes,
+      icon: TrendingUp, color: "#fbbf24", gradient: "linear-gradient(90deg, #fbbf24, transparent)",
+      pct: animalStats.total > 0 ? Math.round(((animalStats.reprodutores + animalStats.matrizes) / animalStats.total) * 100) : null,
+      progressPct: animalStats.total > 0 ? Math.round(((animalStats.reprodutores + animalStats.matrizes) / animalStats.total) * 100) : 0,
     },
     {
-      label: "Garrotes", value: animalStats.garrotes,
-      icon: TrendingUp, color: "#00e5ff", gradient: "linear-gradient(90deg, #00e5ff, transparent)",
-      pct: animalStats.total > 0 ? Math.round((animalStats.garrotes / animalStats.total) * 100) : null,
-      progressPct: animalStats.total > 0 ? Math.round((animalStats.garrotes / animalStats.total) * 100) : 0,
+      label: "Bois + Garrotes", value: animalStats.bois + animalStats.garrotes,
+      icon: BarChart3, color: "#7c3aed", gradient: "linear-gradient(90deg, #7c3aed, transparent)",
+      pct: animalStats.total > 0 ? Math.round(((animalStats.bois + animalStats.garrotes) / animalStats.total) * 100) : null,
+      progressPct: animalStats.total > 0 ? Math.round(((animalStats.bois + animalStats.garrotes) / animalStats.total) * 100) : 0,
     },
     {
       label: "Valor do Rebanho", value: animalStats.valorTotal,
@@ -319,9 +331,9 @@ const DashboardPage = () => {
               <p className="text-xs mt-0.5" style={{ color: "var(--text-secondary)" }}>Distribuição por categoria</p>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-3">
             {ringData.map((ring, i) => (
-              <ProgressRing key={ring.label} {...ring} delay={i * 150} />
+              <ProgressRing key={ring.label} {...ring} delay={i * 120} />
             ))}
           </div>
         </div>
