@@ -99,54 +99,73 @@ const faixaAtualLabel = (animal: Animal): string => faixaLabel[calcularFaixaAtua
 const filtrarPorAba = (animais: Animal[], aba: string) => {
   const ativos = animais.filter(a => a.status === "ativo");
   switch (aba) {
-    case "reprodutores": return ativos.filter(a => a.sexo === "macho_inteiro" && a.faixa_etaria === "adulto" && a.tipo_cadastro === "especial");
-    case "garrotes":     return ativos.filter(a => a.sexo === "macho_inteiro" && a.faixa_etaria !== "adulto");
-    case "bois":         return ativos.filter(a => a.sexo === "macho_capado");
-    case "matrizes":     return ativos.filter(a => a.sexo === "femea" && a.faixa_etaria === "adulto");
-    case "novilhas":     return ativos.filter(a => a.sexo === "femea" && ["garrote", "novilho"].includes(a.faixa_etaria));
-    case "bezerras":     return ativos.filter(a => a.sexo === "femea" && a.faixa_etaria === "bezerro");
+    // Especiais cadastrados individualmente
+    case "reprodutores": return ativos.filter(a => a.sexo === "macho_inteiro" && a.tipo_cadastro === "especial");
+    case "matrizes":     return ativos.filter(a => a.sexo === "femea" && a.tipo_cadastro === "especial");
+    // Machos não-especiais — usa faixa calculada dinamicamente
+    case "garrotes":     return ativos.filter(a => a.sexo === "macho_inteiro" && calcularFaixaAtual(a) === "garrote" && a.tipo_cadastro !== "especial");
+    case "bois":         return ativos.filter(a =>
+      a.sexo === "macho_capado" ||
+      (a.sexo === "macho_inteiro" && calcularFaixaAtual(a) === "boi" && a.tipo_cadastro !== "especial")
+    );
+    // Fêmeas não-especiais — usa faixa calculada dinamicamente
+    case "novilhas":     return ativos.filter(a => a.sexo === "femea" && ["garrote", "boi"].includes(calcularFaixaAtual(a)) && a.tipo_cadastro !== "especial");
+    case "bezerras":     return ativos.filter(a => a.sexo === "femea" && calcularFaixaAtual(a) === "bezerro");
+    case "bezerros":     return ativos.filter(a => a.sexo !== "femea" && calcularFaixaAtual(a) === "bezerro" && a.tipo_cadastro !== "especial");
     default:             return animais;
   }
 };
 
 // ──────────────────────────────────────────────────────────────────────────────
-// PIE CHART HELPERS (unchanged)
+// PROGRESS RING — igual ao Dashboard
 // ──────────────────────────────────────────────────────────────────────────────
-const RADIAN = Math.PI / 180;
-const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
-  if (percent < 0.05) return null;
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.55;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+function useCounter(target: number, duration = 700) {
+  const [count, setCount] = useState(0);
+  const rafRef = useRef<number>();
+  useEffect(() => {
+    if (target === 0) { setCount(0); return; }
+    const start = performance.now();
+    const animate = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.round(eased * target));
+      if (progress < 1) rafRef.current = requestAnimationFrame(animate);
+    };
+    rafRef.current = requestAnimationFrame(animate);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [target, duration]);
+  return count;
+}
+
+interface RingProps { value: number; total: number; label: string; color: string; delay?: number; }
+const ProgressRingSmall = ({ value, total, label, color, delay = 0 }: RingProps) => {
+  const radius = 36;
+  const circumference = 2 * Math.PI * radius;
+  const [animated, setAnimated] = useState(false);
+  const count = useCounter(total, 700);
+  useEffect(() => {
+    const t = setTimeout(() => setAnimated(true), delay + 100);
+    return () => clearTimeout(t);
+  }, [delay]);
+  const offset = animated ? circumference - (value / 100) * circumference : circumference;
   return (
-    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={700}>
-      {`${(percent * 100).toFixed(0)}%`}
-    </text>
+    <div className="flex flex-col items-center gap-1.5" style={{ animationDelay: `${delay}ms` }}>
+      <div className="relative">
+        <svg width={84} height={84} viewBox="0 0 84 84">
+          <circle cx={42} cy={42} r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={7} />
+          <circle cx={42} cy={42} r={radius} fill="none" stroke={color} strokeWidth={7}
+            strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={offset}
+            transform="rotate(-90 42 42)"
+            style={{ transition: "stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1)", filter: `drop-shadow(0 0 5px ${color}80)` }} />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-lg font-black text-white font-mono leading-none">{count}</span>
+          <span className="text-[9px] font-semibold" style={{ color: "var(--text-muted)" }}>{value > 0 ? `${value}%` : "—"}</span>
+        </div>
+      </div>
+      <span className="text-[10px] font-semibold text-center leading-tight" style={{ color: "var(--text-secondary)" }}>{label}</span>
+    </div>
   );
-};
-
-const CustomTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div style={{ background: "hsl(224,42%,20%)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "8px 14px", color: "#fff", fontSize: 13 }}>
-        <p style={{ fontWeight: 700 }}>{payload[0].name}</p>
-        <p style={{ color: "#8892b0" }}>{payload[0].value} animais</p>
-      </div>
-    );
-  }
-  return null;
-};
-
-const CustomTooltipValor = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div style={{ background: "hsl(224,42%,20%)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "8px 14px", color: "#fff", fontSize: 13 }}>
-        <p style={{ fontWeight: 700 }}>{payload[0].name}</p>
-        <p style={{ color: "#8892b0" }}>{payload[0].value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
-      </div>
-    );
-  }
-  return null;
 };
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -218,7 +237,7 @@ const TabelaAnimais = ({ animais, search, onEditar, onVenda, onMorte }: {
                 #{animal.numero_compra}
               </td>
               <td className="px-5 py-4 text-white">{sexoLabel[animal.sexo]}</td>
-              <td className="px-5 py-4 text-white">{faixaLabel[animal.faixa_etaria]}</td>
+              <td className="px-5 py-4 text-white">{faixaAtualLabel(animal)}</td>
               <td className="px-5 py-4 font-mono" style={{ color: "var(--text-secondary)" }}>
                 {animal.peso_entrada ? `${animal.peso_entrada} kg` : <span style={{ fontStyle: "italic", fontSize: 11 }}>—</span>}
               </td>
@@ -314,6 +333,9 @@ const AnimaisPage = () => {
   const [animalVenda, setAnimalVenda] = useState<Animal | null>(null);
   const [valorVenda, setValorVenda] = useState("");
   const [dataVenda, setDataVenda] = useState(new Date().toISOString().split("T")[0]);
+  const [compradorVenda, setCompradorVenda] = useState("");
+  const [gtaSaida, setGtaSaida] = useState("");
+  const [finalidadeVenda, setFinalidadeVenda] = useState("");
   const [erroVenda, setErroVenda] = useState("");
   const [loadingVenda, setLoadingVenda] = useState(false);
 
@@ -368,7 +390,7 @@ const AnimaisPage = () => {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/animais/${animalVenda?.id}/venda`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ valor_venda: Number(valorVenda), data_saida: dataVenda }),
+        body: JSON.stringify({ valor_venda: Number(valorVenda), data_saida: dataVenda, comprador_nome: compradorVenda, numero_gta_saida: gtaSaida, finalidade_venda: finalidadeVenda }),
       });
       const data = await res.json();
       if (!res.ok) { setErroVenda(data.error || "Erro."); return; }
@@ -401,32 +423,36 @@ const AnimaisPage = () => {
     matrizes:     filtrarPorAba(animais, "matrizes").length,
     novilhas:     filtrarPorAba(animais, "novilhas").length,
     bezerras:     filtrarPorAba(animais, "bezerras").length,
+    bezerros:     filtrarPorAba(animais, "bezerros").length,
   };
+  const totalAtivo = ativos.length || 1;
 
-  const CORES_PIZZA = ["#ff6b35", "#e040fb", "#84cc16", "#7c3aed", "#00e5ff", "#fbbf24"];
-
-  const dadosPizza = [
-    { name: "Reprodutores", value: cnt.reprodutores },
-    { name: "Garrotes",     value: cnt.garrotes },
-    { name: "Bois",         value: cnt.bois },
-    { name: "Matrizes",     value: cnt.matrizes },
-    { name: "Novilhas",     value: cnt.novilhas },
-    { name: "Bezerras",     value: cnt.bezerras },
-  ].filter(d => d.value > 0);
+  // Composição com anéis — igual ao Dashboard
+  const ringData = [
+    { label: "Reprodutores", value: Math.round((cnt.reprodutores / totalAtivo) * 100), total: cnt.reprodutores, color: "#fbbf24" },
+    { label: "Garrotes",     value: Math.round((cnt.garrotes     / totalAtivo) * 100), total: cnt.garrotes,     color: "#ff6b35" },
+    { label: "Bois",         value: Math.round((cnt.bois         / totalAtivo) * 100), total: cnt.bois,         color: "#7c3aed" },
+    { label: "Matrizes",     value: Math.round((cnt.matrizes     / totalAtivo) * 100), total: cnt.matrizes,     color: "#e040fb" },
+    { label: "Novilhas",     value: Math.round((cnt.novilhas     / totalAtivo) * 100), total: cnt.novilhas,     color: "#c084fc" },
+    { label: "Bezerros/as",  value: Math.round(((cnt.bezerros + cnt.bezerras) / totalAtivo) * 100), total: cnt.bezerros + cnt.bezerras, color: "#00e5ff" },
+  ];
 
   const calcularValorCategoria = (lista: Animal[]) =>
-    lista.reduce((acc, a) => acc + (a.peso_entrada || 0) * (a.valor_kg || 0), 0);
+    lista.reduce((acc, a) => {
+      const v = a.tipo_cadastro === "especial"
+        ? (a.valor_total || 0)
+        : (a.peso_entrada || 0) * (a.valor_kg || 0);
+      return acc + v;
+    }, 0);
 
-  const dadosValor = [
-    { name: "Reprodutores", value: calcularValorCategoria(filtrarPorAba(animais, "reprodutores")) },
-    { name: "Garrotes",     value: calcularValorCategoria(filtrarPorAba(animais, "garrotes")) },
-    { name: "Bois",         value: calcularValorCategoria(filtrarPorAba(animais, "bois")) },
-    { name: "Matrizes",     value: calcularValorCategoria(filtrarPorAba(animais, "matrizes")) },
-    { name: "Novilhas",     value: calcularValorCategoria(filtrarPorAba(animais, "novilhas")) },
-    { name: "Bezerras",     value: calcularValorCategoria(filtrarPorAba(animais, "bezerras")) },
-  ].filter(d => d.value > 0);
-
-  const valorTotalRebanho = dadosValor.reduce((acc, d) => acc + d.value, 0);
+  const valorTotalRebanho =
+    calcularValorCategoria(filtrarPorAba(animais, "reprodutores")) +
+    calcularValorCategoria(filtrarPorAba(animais, "garrotes")) +
+    calcularValorCategoria(filtrarPorAba(animais, "bois")) +
+    calcularValorCategoria(filtrarPorAba(animais, "matrizes")) +
+    calcularValorCategoria(filtrarPorAba(animais, "novilhas")) +
+    calcularValorCategoria(filtrarPorAba(animais, "bezerras")) +
+    calcularValorCategoria(filtrarPorAba(animais, "bezerros"));
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
@@ -486,67 +512,45 @@ const AnimaisPage = () => {
           </div>
 
           {/* Category grid */}
-          <div className="flex-1 grid grid-cols-3 grid-rows-2 gap-3">
-            <CatCard label="Reprodutores" count={cnt.reprodutores} sub="Macho inteiro adulto" color="#fbbf24" borderColor="#fbbf24" />
-            <CatCard label="Garrotes"     count={cnt.garrotes}     sub="Inteiros jovens"      color="#ff6b35" borderColor="#ff6b35" />
-            <CatCard label="Bois"         count={cnt.bois}         sub="Machos castrados"     color="#fb923c" borderColor="#fb923c" />
-            <CatCard label="Matrizes"     count={cnt.matrizes}     sub="Fêmea acima 36m"      color="#e040fb" borderColor="#e040fb" />
-            <CatCard label="Novilhas"     count={cnt.novilhas}     sub="Fêmea 13 a 36m"       color="#c084fc" borderColor="#c084fc" />
-            <CatCard label="Bezerras"     count={cnt.bezerras}     sub="Fêmea 0 a 12m"        color="#a78bfa" borderColor="#a78bfa" />
+          <div className="flex-1 grid grid-cols-4 grid-rows-2 gap-3">
+            <CatCard label="Reprodutores" count={cnt.reprodutores} sub="Macho especial"        color="#fbbf24" borderColor="#fbbf24" />
+            <CatCard label="Garrotes"     count={cnt.garrotes}     sub="Machos 12–25m"         color="#ff6b35" borderColor="#ff6b35" />
+            <CatCard label="Bois"         count={cnt.bois}         sub="Machos 25m+ / capados"  color="#7c3aed" borderColor="#7c3aed" />
+            <CatCard label="Bezerros"     count={cnt.bezerros}     sub="Machos 0–12m"           color="#00e5ff" borderColor="#00e5ff" />
+            <CatCard label="Matrizes"     count={cnt.matrizes}     sub="Fêmea especial"         color="#e040fb" borderColor="#e040fb" />
+            <CatCard label="Novilhas"     count={cnt.novilhas}     sub="Fêmeas 12m+"            color="#c084fc" borderColor="#c084fc" />
+            <CatCard label="Bezerras"     count={cnt.bezerras}     sub="Fêmeas 0–12m"           color="#a78bfa" borderColor="#a78bfa" />
+            <CatCard label="Valor Total"  count={0}                sub={valorTotalRebanho > 0 ? valorTotalRebanho.toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0}) : "—"} color="#34d399" borderColor="#34d399" />
           </div>
         </div>
 
-        {/* ── Dashboard charts ──────────────────────────────────────────────── */}
+        {/* ── Composição com anéis (igual ao Dashboard) ─────────────────────── */}
         {showDashboard && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6 animate-enter">
-            {/* Pizza: composição */}
-            <div className="dash-card">
-              <p className="text-sm font-bold text-white font-exo2 mb-1">Composição do Rebanho</p>
-              <p className="text-xs mb-4" style={{ color: "var(--text-secondary)" }}>Distribuição por categoria (ativos)</p>
-              {dadosPizza.length > 0 ? (
-                <ResponsiveContainer width="100%" height={260}>
-                  <PieChart>
-                    <Pie data={dadosPizza} cx="50%" cy="50%" labelLine={false} label={renderCustomLabel} outerRadius={100} dataKey="value">
-                      {dadosPizza.map((_, i) => <Cell key={i} fill={CORES_PIZZA[i % CORES_PIZZA.length]} stroke="none" />)}
-                    </Pie>
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend formatter={v => <span style={{ color: "#8892b0", fontSize: 12 }}>{v}</span>} />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-[260px] flex items-center justify-center" style={{ color: "var(--text-secondary)" }}>
-                  Nenhum animal ativo cadastrado.
-                </div>
-              )}
+          <div className="dash-card mb-6 animate-enter">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className="text-base font-bold text-white font-exo2">Composição do Rebanho</p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--text-secondary)" }}>
+                  Distribuição por categoria · faixa calculada pela data atual
+                  {valorTotalRebanho > 0 && (
+                    <span className="ml-2 font-bold" style={{ color: "#34d399" }}>
+                      · Valor estimado: {valorTotalRebanho.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}
+                    </span>
+                  )}
+                </p>
+              </div>
             </div>
-
-            {/* Pizza: valor */}
-            <div className="dash-card">
-              <p className="text-sm font-bold text-white font-exo2 mb-1">Valor Estimado do Rebanho</p>
-              <p className="text-xs mb-4" style={{ color: "var(--text-secondary)" }}>
-                Peso de entrada × valor/kg
-                {valorTotalRebanho > 0 && (
-                  <span className="ml-2 font-bold" style={{ color: "var(--accent-orange)" }}>
-                    Total: {valorTotalRebanho.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                  </span>
-                )}
-              </p>
-              {dadosValor.length > 0 ? (
-                <ResponsiveContainer width="100%" height={260}>
-                  <PieChart>
-                    <Pie data={dadosValor} cx="50%" cy="50%" labelLine={false} label={renderCustomLabel} outerRadius={100} dataKey="value">
-                      {dadosValor.map((_, i) => <Cell key={i} fill={CORES_PIZZA[i % CORES_PIZZA.length]} stroke="none" />)}
-                    </Pie>
-                    <Tooltip content={<CustomTooltipValor />} />
-                    <Legend formatter={v => <span style={{ color: "#8892b0", fontSize: 12 }}>{v}</span>} />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-[260px] flex items-center justify-center" style={{ color: "var(--text-secondary)" }}>
-                  Cadastre peso e valor/kg para visualizar.
-                </div>
-              )}
-            </div>
+            {ativos.length > 0 ? (
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
+                {ringData.map((ring, i) => (
+                  <ProgressRingSmall key={ring.label} {...ring} delay={i * 100} />
+                ))}
+              </div>
+            ) : (
+              <div className="py-10 text-center" style={{ color: "var(--text-secondary)" }}>
+                Nenhum animal ativo cadastrado.
+              </div>
+            )}
           </div>
         )}
 
@@ -565,6 +569,7 @@ const AnimaisPage = () => {
                   { value: "reprodutores", label: `Reprodutores (${cnt.reprodutores})` },
                   { value: "garrotes",     label: `Garrotes (${cnt.garrotes})` },
                   { value: "bois",         label: `Bois (${cnt.bois})` },
+                  { value: "bezerros",     label: `Bezerros (${cnt.bezerros})` },
                   { value: "matrizes",     label: `Matrizes (${cnt.matrizes})` },
                   { value: "novilhas",     label: `Novilhas (${cnt.novilhas})` },
                   { value: "bezerras",     label: `Bezerras (${cnt.bezerras})` },
@@ -583,13 +588,13 @@ const AnimaisPage = () => {
                 ))}
               </TabsList>
 
-              {["todos", "reprodutores", "garrotes", "bois", "matrizes", "novilhas", "bezerras"].map(aba => (
+              {["todos", "reprodutores", "garrotes", "bois", "bezerros", "matrizes", "novilhas", "bezerras"].map(aba => (
                 <TabsContent key={aba} value={aba}>
                   <TabelaAnimais
                     animais={filtrarPorAba(animais, aba)}
                     search={search}
                     onEditar={abrirEditar}
-                    onVenda={a => { setAnimalVenda(a); setValorVenda(""); setDataVenda(new Date().toISOString().split("T")[0]); setErroVenda(""); setModalVenda(true); }}
+                    onVenda={a => { setAnimalVenda(a); setValorVenda(""); setDataVenda(new Date().toISOString().split("T")[0]); setCompradorVenda(""); setGtaSaida(""); setFinalidadeVenda(""); setErroVenda(""); setModalVenda(true); }}
                     onMorte={a => { setAnimalMorte(a); setCausaMorte(""); setDataMorte(new Date().toISOString().split("T")[0]); setErroMorte(""); setModalMorte(true); }}
                   />
                 </TabsContent>
@@ -604,7 +609,7 @@ const AnimaisPage = () => {
         <Modal onClose={() => setModalEditar(false)}>
           <h3 className="text-lg font-bold text-white font-exo2 mb-1">Editar Animal</h3>
           <p className="text-xs mb-5" style={{ color: "var(--text-secondary)" }}>
-            Compra #{animalSel.numero_compra} — {sexoLabel[animalSel.sexo]} — {faixaLabel[animalSel.faixa_etaria]}
+            Compra #{animalSel.numero_compra} — {sexoLabel[animalSel.sexo]} — {faixaAtualLabel(animalSel)}
           </p>
           <div className="flex flex-col gap-3">
             <input type="text" placeholder="Número do brinco" value={editBrinco} onChange={e => setEditBrinco(e.target.value)} className="input-dark" />
@@ -642,8 +647,19 @@ const AnimaisPage = () => {
             </div>
           </div>
           <div className="flex flex-col gap-3">
-            <input type="number" placeholder="Valor da venda (R$)" value={valorVenda} onChange={e => setValorVenda(e.target.value)} className="input-dark" />
-            <input type="date" value={dataVenda} onChange={e => setDataVenda(e.target.value)} className="input-dark" />
+            <input type="text" placeholder="Nome do comprador (opcional)" value={compradorVenda} onChange={e => setCompradorVenda(e.target.value)} className="input-dark" />
+            <div className="grid grid-cols-2 gap-3">
+              <input type="text" placeholder="Nº GTA de saída" value={gtaSaida} onChange={e => setGtaSaida(e.target.value)} className="input-dark" />
+              <input type="date" value={dataVenda} onChange={e => setDataVenda(e.target.value)} className="input-dark" />
+            </div>
+            <select value={finalidadeVenda} onChange={e => setFinalidadeVenda(e.target.value)}
+              className="input-dark" style={{ background: "hsl(228,35%,14%)", color: finalidadeVenda ? "#fff" : "#4a5568" }}>
+              <option value="">Finalidade (opcional)</option>
+              {["Abate","Cria","Recria","Engorda","Reprodução","Exposição","Leilão"].map(f => (
+                <option key={f} value={f}>{f}</option>
+              ))}
+            </select>
+            <input type="number" placeholder="Valor da venda (R$) *" value={valorVenda} onChange={e => setValorVenda(e.target.value)} className="input-dark" />
             {erroVenda && <p className="text-sm text-red-400 text-center">{erroVenda}</p>}
             <div className="flex gap-3 mt-2">
               <button onClick={() => setModalVenda(false)} className="btn-outline-dim flex-1">Cancelar</button>
