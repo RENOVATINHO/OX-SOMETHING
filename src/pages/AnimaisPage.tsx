@@ -4,11 +4,10 @@
 // All business logic, API calls, and filtering are unchanged
 // ==============================
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Pencil, PawPrint, DollarSign, Skull, Plus, TrendingUp, X } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import AppLayout from "@/components/AppLayout";
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -23,7 +22,7 @@ interface Animal {
   status: "ativo" | "vendido" | "morto";
   numero_compra: string;
   sexo: "macho_inteiro" | "macho_capado" | "femea";
-  faixa_etaria: "bezerro" | "garrote" | "novilho" | "adulto";
+  faixa_etaria: "bezerro" | "garrote" | "boi" | "novilho" | "adulto"; // novilho/adulto: legado
   valor_kg: number | null;
   valor_total: number | null;
   numero_gta: string | null;
@@ -32,7 +31,9 @@ interface Animal {
   nome_mae: string | null;
   raca: string | null;
   data_nascimento: string | null;
+  data_compra: string | null;
   tipo_cadastro: "compra" | "especial";
+  finalidade: string | null;
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -46,9 +47,51 @@ const sexoLabel: Record<string, string> = {
 const faixaLabel: Record<string, string> = {
   bezerro: "Bezerro",
   garrote: "Garrote",
-  novilho: "Novilho",
-  adulto:  "Adulto",
+  boi:     "Boi",
+  novilho: "Boi",   // legado → exibe como Boi
+  adulto:  "Boi",   // legado → exibe como Boi
 };
+
+// ──────────────────────────────────────────────────────────────────────────────
+// FAIXA ETÁRIA DINÂMICA — calcula categoria atual com base na data
+// ──────────────────────────────────────────────────────────────────────────────
+const calcularFaixaAtual = (animal: Animal): string => {
+  // Se for especial, não muda a categoria (reprodutor/matriz permanece)
+  if (animal.tipo_cadastro === "especial") return animal.faixa_etaria;
+
+  // Referência: data de nascimento ou data de compra + estimativa de idade na compra
+  let dataNascimento: Date | null = null;
+
+  if (animal.data_nascimento) {
+    dataNascimento = new Date(animal.data_nascimento);
+  } else if (animal.data_compra) {
+    // Estima data de nascimento com base na faixa na época da compra
+    const idadeEstimadaMeses: Record<string, number> = {
+      bezerro: 6,
+      garrote: 18,
+      boi: 30,
+      novilho: 30,
+      adulto: 42,
+    };
+    const mesesNaCompra = idadeEstimadaMeses[animal.faixa_etaria] ?? 12;
+    const dataCompra = new Date(animal.data_compra);
+    dataNascimento = new Date(dataCompra);
+    dataNascimento.setMonth(dataNascimento.getMonth() - mesesNaCompra);
+  }
+
+  if (!dataNascimento) return animal.faixa_etaria;
+
+  const now = new Date();
+  const meses =
+    (now.getFullYear() - dataNascimento.getFullYear()) * 12 +
+    (now.getMonth() - dataNascimento.getMonth());
+
+  if (meses <= 12) return "bezerro";
+  if (meses <= 25) return "garrote";
+  return "boi";
+};
+
+const faixaAtualLabel = (animal: Animal): string => faixaLabel[calcularFaixaAtual(animal)] ?? "—";
 
 // ──────────────────────────────────────────────────────────────────────────────
 // FILTER LOGIC (unchanged)

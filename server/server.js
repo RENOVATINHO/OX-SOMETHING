@@ -136,6 +136,19 @@ async function initDB() {
         ('Solo/Pasto', 'solo_pasto')`);
     }
 
+    // Migração: adicionar coluna finalidade em compras_animais se não existir
+    try {
+      await conn.query(`ALTER TABLE compras_animais ADD COLUMN finalidade VARCHAR(50)`);
+      console.log('✅ Coluna finalidade adicionada em compras_animais.');
+    } catch (e) {
+      if (!e.message.includes('Duplicate column')) {
+        console.log('ℹ️ Coluna finalidade já existe em compras_animais.');
+      }
+    }
+
+    // Migração: renomear faixa_etaria 'novilho' → 'boi' para padronização
+    await conn.query(`UPDATE compras_animais SET faixa_etaria = 'boi' WHERE faixa_etaria = 'novilho'`);
+
     console.log('✅ Tabelas verificadas/criadas com sucesso!');
   } catch (err) {
     console.error('Erro ao inicializar banco:', err.message);
@@ -438,15 +451,15 @@ app.get('/api/compras-animais', autenticar, (req, res) => {
 
 // POST /api/compras-animais — compra normal com vendedor
 app.post('/api/compras-animais', autenticar, (req, res) => {
-  const { vendedor_id, numero_gta, sexo, faixa_etaria, quantidade, valor_kg, data, observacao } = req.body;
+  const { vendedor_id, numero_gta, sexo, faixa_etaria, quantidade, valor_kg, data, observacao, finalidade } = req.body;
   if (!vendedor_id || !sexo || !faixa_etaria || !quantidade || !data)
     return res.status(400).json({ error: 'Preencha todos os campos obrigatórios.' });
 
   getProximoNumero(async (numeroCompra) => {
     try {
       const [result] = await db.promise().query(
-        'INSERT INTO compras_animais (vendedor_id, numero_gta, numero_compra, sexo, faixa_etaria, quantidade, valor_kg, data, observacao) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [vendedor_id, numero_gta || null, numeroCompra, sexo, faixa_etaria, Number(quantidade), valor_kg || 0, data, observacao || null]
+        'INSERT INTO compras_animais (vendedor_id, numero_gta, numero_compra, sexo, faixa_etaria, quantidade, valor_kg, data, observacao, finalidade) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [vendedor_id, numero_gta || null, numeroCompra, sexo, faixa_etaria, Number(quantidade), valor_kg || 0, data, observacao || null, finalidade || null]
       );
       const compraId = result.insertId;
       const animais = Array.from({ length: Number(quantidade) }, () => [compraId, null, null, null, 'ativo', 'compra']);
@@ -498,6 +511,7 @@ app.post('/api/compras-animais/especial', autenticar, (req, res) => {
 app.get('/api/animais', autenticar, (req, res) => {
   db.query(
     `SELECT a.*, ca.numero_compra, ca.sexo, ca.faixa_etaria, ca.valor_kg, ca.numero_gta,
+            ca.data as data_compra, ca.finalidade,
             v.nome as vendedor_nome
      FROM animais a
      LEFT JOIN compras_animais ca ON a.compra_id = ca.id
@@ -526,8 +540,19 @@ app.get('/api/animais/stats', autenticar, (req, res) => {
   db.query(
     `SELECT
       COUNT(*) as total,
-      SUM(CASE WHEN ca.sexo = 'macho_capado' AND a.status = 'ativo' THEN 1 ELSE 0 END) as bois,
-      SUM(CASE WHEN ca.sexo = 'macho_inteiro' AND ca.faixa_etaria != 'adulto' AND a.status = 'ativo' THEN 1 ELSE 0 END) as garrotes,
+      -- Reprodutores: machos inteiros cadastrados como especial
+      SUM(CASE WHEN a.tipo_cadastro = 'especial' AND ca.sexo = 'macho_inteiro' AND a.status = 'ativo' THEN 1 ELSE 0 END) as reprodutores,
+      -- Matrizes: fêmeas cadastradas como especial
+      SUM(CASE WHEN a.tipo_cadastro = 'especial' AND ca.sexo = 'femea' AND a.status = 'ativo' THEN 1 ELSE 0 END) as matrizes,
+      -- Garrotes: machos inteiros jovens (garrote) não-especiais
+      SUM(CASE WHEN ca.sexo = 'macho_inteiro' AND ca.faixa_etaria = 'garrote' AND a.tipo_cadastro != 'especial' AND a.status = 'ativo' THEN 1 ELSE 0 END) as garrotes,
+      -- Bois: machos castrados + machos inteiros adultos (novilho/boi/adulto) não-especiais
+      SUM(CASE WHEN (ca.sexo = 'macho_capado' OR (ca.sexo = 'macho_inteiro' AND ca.faixa_etaria IN ('novilho','boi','adulto') AND a.tipo_cadastro != 'especial')) AND a.status = 'ativo' THEN 1 ELSE 0 END) as bois,
+      -- Novilhas: fêmeas jovens não-especiais
+      SUM(CASE WHEN ca.sexo = 'femea' AND ca.faixa_etaria IN ('garrote','novilho','boi') AND a.tipo_cadastro != 'especial' AND a.status = 'ativo' THEN 1 ELSE 0 END) as novilhas,
+      -- Bezerros/as: todos os de faixa bezerro
+      SUM(CASE WHEN ca.faixa_etaria = 'bezerro' AND a.status = 'ativo' THEN 1 ELSE 0 END) as bezerros,
+      -- Valor total: especial usa valor_total; outros usam peso * valor_kg
       SUM(CASE
         WHEN a.tipo_cadastro = 'especial' THEN COALESCE(a.valor_total, 0)
         ELSE COALESCE(a.peso_entrada * ca.valor_kg, 0)
@@ -569,11 +594,11 @@ app.get('/api/animais/historico-valor', autenticar, (req, res) => {
 });
 
 app.put('/api/animais/:id/venda', autenticar, (req, res) => {
-  const { valor_venda, data_saida } = req.body;
+  const { valor_venda, data_saida, comprador_nome, numero_gta_saida, finalidade_venda } = req.body;
   const id = req.params.id;
   if (!valor_venda) return res.status(400).json({ error: 'Informe o valor da venda.' });
-  db.query('UPDATE animais SET status=?, valor_venda=?, data_saida=? WHERE id=?',
-    ['vendido', valor_venda, data_saida || new Date(), id],
+  db.query('UPDATE animais SET status=?, valor_venda=?, data_saida=?, observacao=CONCAT(COALESCE(observacao,"")," | Comprador: ",COALESCE(?,"-")," | GTA: ",COALESCE(?,"-")," | Finalidade: ",COALESCE(?,"-")) WHERE id=?',
+    ['vendido', valor_venda, data_saida || new Date(), comprador_nome || null, numero_gta_saida || null, finalidade_venda || null, id],
     (err) => {
       if (err) return res.status(500).json({ error: 'Erro ao registrar venda.' });
       res.json({ success: true });
