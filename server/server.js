@@ -48,6 +48,7 @@ async function initDB() {
 
     await conn.query(`CREATE TABLE IF NOT EXISTS vendedores (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      usuario_id INT,
       nome VARCHAR(255) NOT NULL,
       documento VARCHAR(50),
       telefone VARCHAR(50),
@@ -72,6 +73,7 @@ async function initDB() {
 
     await conn.query(`CREATE TABLE IF NOT EXISTS insumos (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      usuario_id INT,
       nome VARCHAR(255) NOT NULL,
       categoria VARCHAR(255) NOT NULL,
       unidade VARCHAR(50) NOT NULL,
@@ -93,6 +95,7 @@ async function initDB() {
 
     await conn.query(`CREATE TABLE IF NOT EXISTS compras_animais (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      usuario_id INT,
       vendedor_id INT,
       numero_gta VARCHAR(50),
       numero_compra VARCHAR(10),
@@ -128,6 +131,7 @@ async function initDB() {
 
     await conn.query(`CREATE TABLE IF NOT EXISTS compras_insumos (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      usuario_id INT,
       vendedor_id INT,
       produto VARCHAR(255) NOT NULL,
       quantidade INT NOT NULL,
@@ -143,6 +147,38 @@ async function initDB() {
         ('Alimentação', 'alimentacao'),
         ('Saúde', 'saude'),
         ('Solo/Pasto', 'solo_pasto')`);
+    }
+
+    // Migração: adicionar usuario_id em vendedores se não existir
+    try {
+      await conn.query(`ALTER TABLE vendedores ADD COLUMN usuario_id INT`);
+      console.log('✅ Coluna usuario_id adicionada em vendedores.');
+    } catch (e) {
+      if (!e.message.includes('Duplicate column')) console.log('ℹ️ usuario_id já existe em vendedores.');
+    }
+
+    // Migração: adicionar usuario_id em insumos se não existir
+    try {
+      await conn.query(`ALTER TABLE insumos ADD COLUMN usuario_id INT`);
+      console.log('✅ Coluna usuario_id adicionada em insumos.');
+    } catch (e) {
+      if (!e.message.includes('Duplicate column')) console.log('ℹ️ usuario_id já existe em insumos.');
+    }
+
+    // Migração: adicionar usuario_id em compras_animais se não existir
+    try {
+      await conn.query(`ALTER TABLE compras_animais ADD COLUMN usuario_id INT`);
+      console.log('✅ Coluna usuario_id adicionada em compras_animais.');
+    } catch (e) {
+      if (!e.message.includes('Duplicate column')) console.log('ℹ️ usuario_id já existe em compras_animais.');
+    }
+
+    // Migração: adicionar usuario_id em compras_insumos se não existir
+    try {
+      await conn.query(`ALTER TABLE compras_insumos ADD COLUMN usuario_id INT`);
+      console.log('✅ Coluna usuario_id adicionada em compras_insumos.');
+    } catch (e) {
+      if (!e.message.includes('Duplicate column')) console.log('ℹ️ usuario_id já existe em compras_insumos.');
     }
 
     // Migração: adicionar coluna finalidade em compras_animais se não existir
@@ -223,16 +259,13 @@ app.post('/api/esqueci-senha', async (req, res) => {
   if (!email) return res.status(400).json({ error: 'Informe o email.' });
   try {
     const [rows] = await db.promise().query('SELECT id FROM usuarios WHERE email = ?', [email]);
-    // Sempre retorna sucesso para não revelar se o email existe
     if (rows.length === 0) return res.json({ success: true });
-    // Gera código de 6 dígitos
     const codigo = String(Math.floor(100000 + Math.random() * 900000));
-    const expira = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+    const expira = new Date(Date.now() + 15 * 60 * 1000);
     await db.promise().query(
       'INSERT INTO reset_tokens (email, token, expira) VALUES (?, ?, ?)',
       [email, codigo, expira]
     );
-    // Retorna o código diretamente (app local sem email SMTP)
     res.json({ success: true, codigo });
   } catch (err) {
     console.error('Erro esqueci-senha:', err);
@@ -297,7 +330,7 @@ app.put('/api/usuario', autenticar, async (req, res) => {
 });
 
 // ==============================
-// CATEGORIAS DE INSUMOS
+// CATEGORIAS DE INSUMOS (globais — compartilhadas entre usuários)
 // ==============================
 app.get('/api/categorias-insumos', autenticar, (req, res) => {
   db.query('SELECT * FROM categorias_insumos ORDER BY nome', (err, results) => {
@@ -322,7 +355,9 @@ app.post('/api/categorias-insumos', autenticar, (req, res) => {
 app.get('/api/insumos/dashboard', autenticar, (req, res) => {
   db.query(
     `SELECT categoria, nome, unidade, quantidade_estoque, valor_unitario,
-     (quantidade_estoque * valor_unitario) AS valor_total FROM insumos ORDER BY categoria, nome`,
+     (quantidade_estoque * valor_unitario) AS valor_total
+     FROM insumos WHERE usuario_id = ? ORDER BY categoria, nome`,
+    [req.usuarioId],
     (err, results) => {
       if (err) return res.status(500).json({ error: 'Erro ao buscar dados.' });
       const agrupado = {};
@@ -341,7 +376,7 @@ app.get('/api/insumos/dashboard', autenticar, (req, res) => {
 });
 
 app.get('/api/insumos', autenticar, (req, res) => {
-  db.query('SELECT * FROM insumos ORDER BY categoria, nome', (err, results) => {
+  db.query('SELECT * FROM insumos WHERE usuario_id = ? ORDER BY categoria, nome', [req.usuarioId], (err, results) => {
     if (err) return res.status(500).json({ error: 'Erro ao buscar insumos.' });
     res.json(results);
   });
@@ -354,8 +389,8 @@ app.post('/api/insumos', autenticar, (req, res) => {
   const quantidade = quantidade_inicial || 0;
   const valor = valor_unitario || 0;
   db.query(
-    'INSERT INTO insumos (nome, categoria, unidade, valor_unitario, quantidade_estoque) VALUES (?, ?, ?, ?, ?)',
-    [nome, categoria, unidade, valor, quantidade],
+    'INSERT INTO insumos (usuario_id, nome, categoria, unidade, valor_unitario, quantidade_estoque) VALUES (?, ?, ?, ?, ?, ?)',
+    [req.usuarioId, nome, categoria, unidade, valor, quantidade],
     (err, result) => {
       if (err) return res.status(500).json({ error: 'Erro ao cadastrar insumo.' });
       if (quantidade > 0) {
@@ -372,8 +407,8 @@ app.put('/api/insumos/:id', autenticar, (req, res) => {
   const id = req.params.id;
   if (!nome || !categoria || !unidade)
     return res.status(400).json({ error: 'Preencha todos os campos obrigatórios.' });
-  db.query('UPDATE insumos SET nome=?, categoria=?, unidade=?, valor_unitario=? WHERE id=?',
-    [nome, categoria, unidade, valor_unitario || 0, id],
+  db.query('UPDATE insumos SET nome=?, categoria=?, unidade=?, valor_unitario=? WHERE id=? AND usuario_id=?',
+    [nome, categoria, unidade, valor_unitario || 0, id, req.usuarioId],
     (err) => {
       if (err) return res.status(500).json({ error: 'Erro ao editar insumo.' });
       res.json({ success: true });
@@ -383,11 +418,15 @@ app.put('/api/insumos/:id', autenticar, (req, res) => {
 
 app.delete('/api/insumos/:id', autenticar, (req, res) => {
   const id = req.params.id;
-  db.query('DELETE FROM movimentacoes_insumos WHERE insumo_id = ?', [id], (err) => {
-    if (err) return res.status(500).json({ error: 'Erro ao excluir movimentações.' });
-    db.query('DELETE FROM insumos WHERE id = ?', [id], (err) => {
-      if (err) return res.status(500).json({ error: 'Erro ao excluir insumo.' });
-      res.json({ success: true });
+  db.query('SELECT id FROM insumos WHERE id = ? AND usuario_id = ?', [id, req.usuarioId], (err, results) => {
+    if (err) return res.status(500).json({ error: 'Erro no servidor.' });
+    if (results.length === 0) return res.status(404).json({ error: 'Insumo não encontrado.' });
+    db.query('DELETE FROM movimentacoes_insumos WHERE insumo_id = ?', [id], (err) => {
+      if (err) return res.status(500).json({ error: 'Erro ao excluir movimentações.' });
+      db.query('DELETE FROM insumos WHERE id = ? AND usuario_id = ?', [id, req.usuarioId], (err) => {
+        if (err) return res.status(500).json({ error: 'Erro ao excluir insumo.' });
+        res.json({ success: true });
+      });
     });
   });
 });
@@ -397,19 +436,23 @@ app.post('/api/insumos/:id/entrada', autenticar, (req, res) => {
   const insumoId = req.params.id;
   if (!quantidade || quantidade <= 0)
     return res.status(400).json({ error: 'Informe uma quantidade válida.' });
-  db.query('INSERT INTO movimentacoes_insumos (insumo_id, tipo, quantidade, valor_unitario, observacao) VALUES (?, ?, ?, ?, ?)',
-    [insumoId, 'entrada', quantidade, valor_unitario || 0, observacao || null],
-    (err) => {
-      if (err) return res.status(500).json({ error: 'Erro ao registrar entrada.' });
-      db.query('UPDATE insumos SET quantidade_estoque = quantidade_estoque + ?, valor_unitario = ? WHERE id = ?',
-        [quantidade, valor_unitario || 0, insumoId],
-        (err) => {
-          if (err) return res.status(500).json({ error: 'Erro ao atualizar estoque.' });
-          res.json({ message: 'Entrada registrada com sucesso.' });
-        }
-      );
-    }
-  );
+  db.query('SELECT id FROM insumos WHERE id = ? AND usuario_id = ?', [insumoId, req.usuarioId], (err, results) => {
+    if (err) return res.status(500).json({ error: 'Erro no servidor.' });
+    if (results.length === 0) return res.status(404).json({ error: 'Insumo não encontrado.' });
+    db.query('INSERT INTO movimentacoes_insumos (insumo_id, tipo, quantidade, valor_unitario, observacao) VALUES (?, ?, ?, ?, ?)',
+      [insumoId, 'entrada', quantidade, valor_unitario || 0, observacao || null],
+      (err) => {
+        if (err) return res.status(500).json({ error: 'Erro ao registrar entrada.' });
+        db.query('UPDATE insumos SET quantidade_estoque = quantidade_estoque + ?, valor_unitario = ? WHERE id = ? AND usuario_id = ?',
+          [quantidade, valor_unitario || 0, insumoId, req.usuarioId],
+          (err) => {
+            if (err) return res.status(500).json({ error: 'Erro ao atualizar estoque.' });
+            res.json({ message: 'Entrada registrada com sucesso.' });
+          }
+        );
+      }
+    );
+  });
 });
 
 app.post('/api/insumos/:id/saida', autenticar, (req, res) => {
@@ -417,7 +460,7 @@ app.post('/api/insumos/:id/saida', autenticar, (req, res) => {
   const insumoId = req.params.id;
   if (!quantidade || quantidade <= 0)
     return res.status(400).json({ error: 'Informe uma quantidade válida.' });
-  db.query('SELECT quantidade_estoque FROM insumos WHERE id = ?', [insumoId], (err, results) => {
+  db.query('SELECT quantidade_estoque FROM insumos WHERE id = ? AND usuario_id = ?', [insumoId, req.usuarioId], (err, results) => {
     if (err) return res.status(500).json({ error: 'Erro no servidor.' });
     if (results.length === 0) return res.status(404).json({ error: 'Insumo não encontrado.' });
     if (results[0].quantidade_estoque < quantidade)
@@ -426,8 +469,8 @@ app.post('/api/insumos/:id/saida', autenticar, (req, res) => {
       [insumoId, 'saida', quantidade, observacao || null],
       (err) => {
         if (err) return res.status(500).json({ error: 'Erro ao registrar saída.' });
-        db.query('UPDATE insumos SET quantidade_estoque = quantidade_estoque - ? WHERE id = ?',
-          [quantidade, insumoId],
+        db.query('UPDATE insumos SET quantidade_estoque = quantidade_estoque - ? WHERE id = ? AND usuario_id = ?',
+          [quantidade, insumoId, req.usuarioId],
           (err) => {
             if (err) return res.status(500).json({ error: 'Erro ao atualizar estoque.' });
             res.json({ message: 'Saída registrada com sucesso.' });
@@ -444,9 +487,9 @@ app.post('/api/insumos/:id/saida', autenticar, (req, res) => {
 app.get('/api/vendedores', autenticar, (req, res) => {
   const { tipo } = req.query;
   const query = tipo
-    ? 'SELECT * FROM vendedores WHERE tipo = ? ORDER BY nome'
-    : 'SELECT * FROM vendedores ORDER BY nome';
-  const params = tipo ? [tipo] : [];
+    ? 'SELECT * FROM vendedores WHERE usuario_id = ? AND tipo = ? ORDER BY nome'
+    : 'SELECT * FROM vendedores WHERE usuario_id = ? ORDER BY nome';
+  const params = tipo ? [req.usuarioId, tipo] : [req.usuarioId];
   db.query(query, params, (err, results) => {
     if (err) return res.status(500).json({ error: 'Erro ao buscar.' });
     res.json(results);
@@ -456,8 +499,8 @@ app.get('/api/vendedores', autenticar, (req, res) => {
 app.post('/api/vendedores', autenticar, (req, res) => {
   const { nome, documento, telefone, cidade, tipo } = req.body;
   if (!nome) return res.status(400).json({ error: 'Informe o nome.' });
-  db.query('INSERT INTO vendedores (nome, documento, telefone, cidade, tipo) VALUES (?, ?, ?, ?, ?)',
-    [nome, documento || null, telefone || null, cidade || null, tipo || 'vendedor'],
+  db.query('INSERT INTO vendedores (usuario_id, nome, documento, telefone, cidade, tipo) VALUES (?, ?, ?, ?, ?, ?)',
+    [req.usuarioId, nome, documento || null, telefone || null, cidade || null, tipo || 'vendedor'],
     (err, result) => {
       if (err) return res.status(500).json({ error: 'Erro ao cadastrar vendedor.' });
       res.status(201).json({ id: result.insertId, message: 'Vendedor cadastrado.' });
@@ -469,8 +512,8 @@ app.put('/api/vendedores/:id', autenticar, (req, res) => {
   const { nome, documento, telefone, cidade } = req.body;
   const id = req.params.id;
   if (!nome) return res.status(400).json({ error: 'Informe o nome do vendedor.' });
-  db.query('UPDATE vendedores SET nome=?, documento=?, telefone=?, cidade=? WHERE id=?',
-    [nome, documento || null, telefone || null, cidade || null, id],
+  db.query('UPDATE vendedores SET nome=?, documento=?, telefone=?, cidade=? WHERE id=? AND usuario_id=?',
+    [nome, documento || null, telefone || null, cidade || null, id, req.usuarioId],
     (err) => {
       if (err) return res.status(500).json({ error: 'Erro ao editar vendedor.' });
       res.json({ success: true });
@@ -479,7 +522,7 @@ app.put('/api/vendedores/:id', autenticar, (req, res) => {
 });
 
 app.delete('/api/vendedores/:id', autenticar, (req, res) => {
-  db.query('DELETE FROM vendedores WHERE id = ?', [req.params.id], (err) => {
+  db.query('DELETE FROM vendedores WHERE id = ? AND usuario_id = ?', [req.params.id, req.usuarioId], (err) => {
     if (err) return res.status(500).json({ error: 'Erro ao excluir vendedor.' });
     res.json({ success: true });
   });
@@ -489,9 +532,9 @@ app.delete('/api/vendedores/:id', autenticar, (req, res) => {
 // COMPRAS DE ANIMAIS
 // ==============================
 
-// Gera próximo número de compra sem salvar
-const getProximoNumero = (callback) => {
-  db.query('SELECT numero_compra FROM compras_animais ORDER BY id DESC LIMIT 1', (err, results) => {
+// Gera próximo número de compra por usuário
+const getProximoNumero = (usuarioId, callback) => {
+  db.query('SELECT numero_compra FROM compras_animais WHERE usuario_id = ? ORDER BY id DESC LIMIT 1', [usuarioId], (err, results) => {
     if (err || results.length === 0) return callback('001');
     const ultimo = parseInt(results[0].numero_compra || '0', 10);
     callback(String(ultimo + 1).padStart(3, '0'));
@@ -500,16 +543,18 @@ const getProximoNumero = (callback) => {
 
 // GET /api/compras-animais/proximo-numero — preview sem incrementar
 app.get('/api/compras-animais/proximo-numero', autenticar, (req, res) => {
-  getProximoNumero((numero) => res.json({ numero }));
+  getProximoNumero(req.usuarioId, (numero) => res.json({ numero }));
 });
 
 // GET /api/compras-animais
 app.get('/api/compras-animais', autenticar, (req, res) => {
   db.query(
-    `SELECT ca.*, v.nome as vendedor_nome 
-     FROM compras_animais ca 
-     LEFT JOIN vendedores v ON ca.vendedor_id = v.id 
+    `SELECT ca.*, v.nome as vendedor_nome
+     FROM compras_animais ca
+     LEFT JOIN vendedores v ON ca.vendedor_id = v.id
+     WHERE ca.usuario_id = ?
      ORDER BY ca.id DESC`,
+    [req.usuarioId],
     (err, results) => {
       if (err) return res.status(500).json({ error: 'Erro ao buscar compras.' });
       res.json(results);
@@ -523,11 +568,11 @@ app.post('/api/compras-animais', autenticar, (req, res) => {
   if (!vendedor_id || !sexo || !faixa_etaria || !quantidade || !data)
     return res.status(400).json({ error: 'Preencha todos os campos obrigatórios.' });
 
-  getProximoNumero(async (numeroCompra) => {
+  getProximoNumero(req.usuarioId, async (numeroCompra) => {
     try {
       const [result] = await db.promise().query(
-        'INSERT INTO compras_animais (vendedor_id, numero_gta, numero_compra, sexo, faixa_etaria, quantidade, valor_kg, data, observacao, finalidade) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [vendedor_id, numero_gta || null, numeroCompra, sexo, faixa_etaria, Number(quantidade), valor_kg || 0, data, observacao || null, finalidade || null]
+        'INSERT INTO compras_animais (usuario_id, vendedor_id, numero_gta, numero_compra, sexo, faixa_etaria, quantidade, valor_kg, data, observacao, finalidade) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [req.usuarioId, vendedor_id, numero_gta || null, numeroCompra, sexo, faixa_etaria, Number(quantidade), valor_kg || 0, data, observacao || null, finalidade || null]
       );
       const compraId = result.insertId;
       const animais = Array.from({ length: Number(quantidade) }, () => [compraId, null, null, null, 'ativo', 'compra']);
@@ -549,11 +594,11 @@ app.post('/api/compras-animais/especial', autenticar, (req, res) => {
   if (!sexo || !faixa_etaria || !quantidade || !data)
     return res.status(400).json({ error: 'Preencha todos os campos obrigatórios.' });
 
-  getProximoNumero(async (numeroCompra) => {
+  getProximoNumero(req.usuarioId, async (numeroCompra) => {
     try {
       const [result] = await db.promise().query(
-        'INSERT INTO compras_animais (numero_compra, sexo, faixa_etaria, quantidade, data, observacao) VALUES (?, ?, ?, ?, ?, ?)',
-        [numeroCompra, sexo, faixa_etaria, Number(quantidade), data, observacao || null]
+        'INSERT INTO compras_animais (usuario_id, numero_compra, sexo, faixa_etaria, quantidade, data, observacao) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [req.usuarioId, numeroCompra, sexo, faixa_etaria, Number(quantidade), data, observacao || null]
       );
       const compraId = result.insertId;
       const animais = Array.from({ length: Number(quantidade) }, () => [
@@ -584,7 +629,9 @@ app.get('/api/animais', autenticar, (req, res) => {
      FROM animais a
      LEFT JOIN compras_animais ca ON a.compra_id = ca.id
      LEFT JOIN vendedores v ON ca.vendedor_id = v.id
+     WHERE ca.usuario_id = ?
      ORDER BY a.criado_em DESC`,
+    [req.usuarioId],
     (err, results) => {
       if (err) return res.status(500).json({ error: 'Erro ao buscar animais.' });
       res.json(results);
@@ -595,8 +642,12 @@ app.get('/api/animais', autenticar, (req, res) => {
 app.put('/api/animais/:id', autenticar, (req, res) => {
   const { brinco, peso_entrada, observacao, status } = req.body;
   const id = req.params.id;
-  db.query('UPDATE animais SET brinco=?, peso_entrada=?, observacao=?, status=? WHERE id=?',
-    [brinco || null, peso_entrada || null, observacao || null, status || 'ativo', id],
+  db.query(
+    `UPDATE animais a
+     INNER JOIN compras_animais ca ON a.compra_id = ca.id AND ca.usuario_id = ?
+     SET a.brinco=?, a.peso_entrada=?, a.observacao=?, a.status=?
+     WHERE a.id=?`,
+    [req.usuarioId, brinco || null, peso_entrada || null, observacao || null, status || 'ativo', id],
     (err) => {
       if (err) return res.status(500).json({ error: 'Erro ao atualizar animal.' });
       res.json({ success: true });
@@ -608,26 +659,20 @@ app.get('/api/animais/stats', autenticar, (req, res) => {
   db.query(
     `SELECT
       COUNT(*) as total,
-      -- Reprodutores: machos inteiros cadastrados como especial
       SUM(CASE WHEN a.tipo_cadastro = 'especial' AND ca.sexo = 'macho_inteiro' AND a.status = 'ativo' THEN 1 ELSE 0 END) as reprodutores,
-      -- Matrizes: fêmeas cadastradas como especial
       SUM(CASE WHEN a.tipo_cadastro = 'especial' AND ca.sexo = 'femea' AND a.status = 'ativo' THEN 1 ELSE 0 END) as matrizes,
-      -- Garrotes: machos inteiros jovens (garrote) não-especiais
       SUM(CASE WHEN ca.sexo = 'macho_inteiro' AND ca.faixa_etaria = 'garrote' AND a.tipo_cadastro != 'especial' AND a.status = 'ativo' THEN 1 ELSE 0 END) as garrotes,
-      -- Bois: machos castrados + machos inteiros adultos (novilho/boi/adulto) não-especiais
       SUM(CASE WHEN (ca.sexo = 'macho_capado' OR (ca.sexo = 'macho_inteiro' AND ca.faixa_etaria IN ('novilho','boi','adulto') AND a.tipo_cadastro != 'especial')) AND a.status = 'ativo' THEN 1 ELSE 0 END) as bois,
-      -- Novilhas: fêmeas jovens não-especiais
       SUM(CASE WHEN ca.sexo = 'femea' AND ca.faixa_etaria IN ('garrote','novilho','boi') AND a.tipo_cadastro != 'especial' AND a.status = 'ativo' THEN 1 ELSE 0 END) as novilhas,
-      -- Bezerros/as: todos os de faixa bezerro
       SUM(CASE WHEN ca.faixa_etaria = 'bezerro' AND a.status = 'ativo' THEN 1 ELSE 0 END) as bezerros,
-      -- Valor total: especial usa valor_total; outros usam peso * valor_kg
       SUM(CASE
         WHEN a.tipo_cadastro = 'especial' THEN COALESCE(a.valor_total, 0)
         ELSE COALESCE(a.peso_entrada * ca.valor_kg, 0)
       END) as valor_total_rebanho
      FROM animais a
      LEFT JOIN compras_animais ca ON a.compra_id = ca.id
-     WHERE a.status = 'ativo'`,
+     WHERE a.status = 'ativo' AND ca.usuario_id = ?`,
+    [req.usuarioId],
     (err, results) => {
       if (err) return res.status(500).json({ error: 'Erro ao buscar estatísticas.' });
       res.json(results[0]);
@@ -646,9 +691,11 @@ app.get('/api/animais/historico-valor', autenticar, (req, res) => {
       END) as valor_periodo
     FROM animais a
     LEFT JOIN compras_animais ca ON a.compra_id = ca.id
+    WHERE ca.usuario_id = ?
     GROUP BY mes_ordem, mes_label
     ORDER BY mes_ordem ASC
     LIMIT 24`,
+    [req.usuarioId],
     (err, results) => {
       if (err) return res.status(500).json({ error: 'Erro ao buscar histórico.' });
       let acumulado = 0;
@@ -665,8 +712,13 @@ app.put('/api/animais/:id/venda', autenticar, (req, res) => {
   const { valor_venda, data_saida, comprador_nome, numero_gta_saida, finalidade_venda } = req.body;
   const id = req.params.id;
   if (!valor_venda) return res.status(400).json({ error: 'Informe o valor da venda.' });
-  db.query('UPDATE animais SET status=?, valor_venda=?, data_saida=?, observacao=CONCAT(COALESCE(observacao,"")," | Comprador: ",COALESCE(?,"-")," | GTA: ",COALESCE(?,"-")," | Finalidade: ",COALESCE(?,"-")) WHERE id=?',
-    ['vendido', valor_venda, data_saida || new Date(), comprador_nome || null, numero_gta_saida || null, finalidade_venda || null, id],
+  db.query(
+    `UPDATE animais a
+     INNER JOIN compras_animais ca ON a.compra_id = ca.id AND ca.usuario_id = ?
+     SET a.status='vendido', a.valor_venda=?, a.data_saida=?,
+         a.observacao=CONCAT(COALESCE(a.observacao,"")," | Comprador: ",COALESCE(?,"-")," | GTA: ",COALESCE(?,"-")," | Finalidade: ",COALESCE(?,"-"))
+     WHERE a.id=?`,
+    [req.usuarioId, valor_venda, data_saida || new Date(), comprador_nome || null, numero_gta_saida || null, finalidade_venda || null, id],
     (err) => {
       if (err) return res.status(500).json({ error: 'Erro ao registrar venda.' });
       res.json({ success: true });
@@ -683,7 +735,7 @@ app.post('/api/vendas-animais', autenticar, async (req, res) => {
     return res.status(400).json({ error: 'Informe o valor por cabeça.' });
   try {
     let whereExtra = '';
-    const params = [];
+    const params = [req.usuarioId];
     if (sexo) { whereExtra += ' AND ca.sexo = ?'; params.push(sexo); }
     if (faixa_etaria) { whereExtra += ' AND ca.faixa_etaria = ?'; params.push(faixa_etaria); }
     params.push(Number(quantidade));
@@ -691,7 +743,7 @@ app.post('/api/vendas-animais', autenticar, async (req, res) => {
     const [animais] = await db.promise().query(
       `SELECT a.id FROM animais a
        LEFT JOIN compras_animais ca ON a.compra_id = ca.id
-       WHERE a.status = 'ativo'${whereExtra}
+       WHERE a.status = 'ativo' AND ca.usuario_id = ?${whereExtra}
        LIMIT ?`,
       params
     );
@@ -728,8 +780,12 @@ app.post('/api/vendas-animais', autenticar, async (req, res) => {
 app.put('/api/animais/:id/morte', autenticar, (req, res) => {
   const { causa_morte, data_saida } = req.body;
   const id = req.params.id;
-  db.query('UPDATE animais SET status=?, causa_morte=?, data_saida=? WHERE id=?',
-    ['morto', causa_morte || null, data_saida || new Date(), id],
+  db.query(
+    `UPDATE animais a
+     INNER JOIN compras_animais ca ON a.compra_id = ca.id AND ca.usuario_id = ?
+     SET a.status='morto', a.causa_morte=?, a.data_saida=?
+     WHERE a.id=?`,
+    [req.usuarioId, causa_morte || null, data_saida || new Date(), id],
     (err) => {
       if (err) return res.status(500).json({ error: 'Erro ao registrar morte.' });
       res.json({ success: true });
@@ -742,12 +798,14 @@ app.put('/api/animais/:id/morte', autenticar, (req, res) => {
 // ==============================
 
 // GET /api/compras-insumos
-app.get('/api/compras-insumos', autenticar, (_req, res) => {
+app.get('/api/compras-insumos', autenticar, (req, res) => {
   db.query(
     `SELECT ci.*, v.nome as vendedor_nome
      FROM compras_insumos ci
      LEFT JOIN vendedores v ON ci.vendedor_id = v.id
+     WHERE ci.usuario_id = ?
      ORDER BY ci.id DESC`,
+    [req.usuarioId],
     (err, results) => {
       if (err) return res.status(500).json({ error: 'Erro ao buscar compras de insumos.' });
       res.json(results);
@@ -761,8 +819,8 @@ app.post('/api/compras-insumos', autenticar, (req, res) => {
   if (!produto || !quantidade || !valor)
     return res.status(400).json({ error: 'Produto, quantidade e valor são obrigatórios.' });
   db.query(
-    'INSERT INTO compras_insumos (vendedor_id, produto, quantidade, valor, nota_fiscal) VALUES (?, ?, ?, ?, ?)',
-    [vendedor_id || null, produto, Number(quantidade), Number(valor), nota_fiscal || null],
+    'INSERT INTO compras_insumos (usuario_id, vendedor_id, produto, quantidade, valor, nota_fiscal) VALUES (?, ?, ?, ?, ?, ?)',
+    [req.usuarioId, vendedor_id || null, produto, Number(quantidade), Number(valor), nota_fiscal || null],
     (err, result) => {
       if (err) return res.status(500).json({ error: 'Erro ao registrar compra de insumo.' });
       res.status(201).json({ id: result.insertId, message: 'Compra de insumo registrada.' });
