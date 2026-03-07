@@ -15,7 +15,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, User, Home, MapPin, FileText } from "lucide-react";
+import { Mail, Lock, User, Home, MapPin, FileText, Eye, EyeOff } from "lucide-react";
 import mascotImg from "@/assets/mascot.png";
 import { useAuth } from "@/context/AuthContext";
 
@@ -27,6 +27,8 @@ const CadastrarSePage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [nomePropriedade, setNomePropriedade] = useState("");
@@ -173,17 +175,23 @@ const CadastrarSePage = () => {
               <div className="px-5 py-4">
                 <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Senha *</label>
                 <div className="flex items-center gap-2">
-                  <Lock size={14} className="text-[#8892b0]" />
-                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Crie uma senha" required
+                  <Lock size={14} className="text-[#8892b0] flex-shrink-0" />
+                  <input type={showPass ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Crie uma senha" required
                     className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]" />
+                  <button type="button" onClick={() => setShowPass(v => !v)} className="text-[#4a5568] hover:text-[#8892b0] transition-colors flex-shrink-0">
+                    {showPass ? <EyeOff size={13} /> : <Eye size={13} />}
+                  </button>
                 </div>
               </div>
               <div className="px-5 py-4">
                 <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Confirmar *</label>
                 <div className="flex items-center gap-2">
-                  <Lock size={14} className="text-[#8892b0]" />
-                  <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirme a senha" required
+                  <Lock size={14} className="text-[#8892b0] flex-shrink-0" />
+                  <input type={showConfirm ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirme a senha" required
                     className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]" />
+                  <button type="button" onClick={() => setShowConfirm(v => !v)} className="text-[#4a5568] hover:text-[#8892b0] transition-colors flex-shrink-0">
+                    {showConfirm ? <EyeOff size={13} /> : <Eye size={13} />}
+                  </button>
                 </div>
               </div>
             </div>

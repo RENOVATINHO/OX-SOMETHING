@@ -137,8 +137,15 @@ const AppLayout = ({ children, title }: AppLayoutProps) => {
   const isDashboard = location.pathname === "/dashboard";
   const breadcrumb  = getBreadcrumb(location.pathname, title);
 
-  const isActive = (route: string) =>
-    location.pathname === route || location.pathname.startsWith(route + "/");
+  const isActive = (route: string) => {
+    if (location.pathname === route) return true;
+    // Não ativa o nav primário se a rota atual pertence a um item secundário
+    const isSecondaryRoute = secondaryItems.some(
+      s => location.pathname === s.route || location.pathname.startsWith(s.route + "/")
+    );
+    if (isSecondaryRoute) return false;
+    return location.pathname.startsWith(route + "/");
+  };
 
   const handleNav = (route: string) => {
     navigate(route);
