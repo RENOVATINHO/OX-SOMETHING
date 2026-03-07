@@ -192,7 +192,11 @@ async function initDB() {
     }
 
     // Migração: renomear faixa_etaria 'novilho' → 'boi' para padronização
-    await conn.query(`UPDATE compras_animais SET faixa_etaria = 'boi' WHERE faixa_etaria = 'novilho'`);
+    try {
+      await conn.query(`UPDATE compras_animais SET faixa_etaria = 'boi' WHERE faixa_etaria = 'novilho'`);
+    } catch (e) {
+      console.log('ℹ️ Migração faixa_etaria ignorada:', e.message);
+    }
 
     // Migração: adicionar coluna tipo em vendedores se não existir
     try {
