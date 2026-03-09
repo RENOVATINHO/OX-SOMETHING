@@ -33,7 +33,8 @@ const NovaCompraAnimaisPage = () => {
   // ── Campos do formulário ──────────────────────────────────────────────────
   const [vendedorId, setVendedorId] = useState("");       // ID do vendedor selecionado
   const [numeroGta, setNumeroGta] = useState("");          // Guia de Trânsito Animal (opcional)
-  const [sexo, setSexo] = useState("");                    // "macho_inteiro" | "macho_capado" | "femea"
+  const [sexo, setSexo] = useState("");                    // "macho" | "femea"
+  const [castrado, setCastrado] = useState(false);         // só aplica quando sexo = "macho"
   const [faixaEtaria, setFaixaEtaria] = useState("");      // "bezerro" | "garrote" | "boi"
   const [quantidade, setQuantidade] = useState("");        // quantos animais desta compra
   const [valorKg, setValorKg] = useState("");              // R$/kg (usado para estimar valor do rebanho)
@@ -97,7 +98,7 @@ const NovaCompraAnimaisPage = () => {
         body: JSON.stringify({
           vendedor_id: Number(vendedorId),
           numero_gta: numeroGta || null,
-          sexo,
+          sexo: sexo === "macho" ? (castrado ? "macho_capado" : "macho_inteiro") : "femea",
           faixa_etaria: faixaEtaria,
           quantidade: Number(quantidade),
           valor_kg: Number(valorKg) || 0,
@@ -186,7 +187,7 @@ const NovaCompraAnimaisPage = () => {
             <FileText size={20} className="text-[#8892b0] flex-shrink-0" />
           </div>
 
-          {/* Sexo + Faixa Etária */}
+          {/* Sexo + Castrado (só macho) + Faixa Etária */}
           <div className="grid grid-cols-2 divide-x divide-white/[0.06]">
             <div className="px-5 py-4">
               <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Sexo *</label>
@@ -194,15 +195,28 @@ const NovaCompraAnimaisPage = () => {
                 <Tag size={14} className="text-[#8892b0]" />
                 <select
                   value={sexo}
-                  onChange={(e) => setSexo(e.target.value)}
+                  onChange={(e) => { setSexo(e.target.value); setCastrado(false); setFaixaEtaria(""); }}
                   className="w-full bg-transparent text-white text-sm outline-none appearance-none cursor-pointer"
                 >
                   <option value="" className="bg-[#1a2332]">Selecione</option>
-                  <option value="macho_inteiro" className="bg-[#1a2332]">Macho Inteiro</option>
-                  <option value="macho_capado" className="bg-[#1a2332]">Macho Capado</option>
+                  <option value="macho" className="bg-[#1a2332]">Macho</option>
                   <option value="femea" className="bg-[#1a2332]">Fêmea</option>
                 </select>
               </div>
+              {sexo === "macho" && (
+                <div className="flex items-center gap-2 mt-3">
+                  <input
+                    type="checkbox"
+                    id="castrado"
+                    checked={castrado}
+                    onChange={(e) => setCastrado(e.target.checked)}
+                    className="w-4 h-4 accent-[#ff6b35] cursor-pointer"
+                  />
+                  <label htmlFor="castrado" className="text-xs font-semibold text-[#8892b0] cursor-pointer">
+                    Animal castrado
+                  </label>
+                </div>
+              )}
             </div>
             <div className="px-5 py-4">
               <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Faixa Etária *</label>
@@ -214,9 +228,19 @@ const NovaCompraAnimaisPage = () => {
                   className="w-full bg-transparent text-white text-sm outline-none appearance-none cursor-pointer"
                 >
                   <option value="" className="bg-[#1a2332]">Selecione</option>
-                  <option value="bezerro" className="bg-[#1a2332]">Bezerro — 0 a 12 meses</option>
-                  <option value="garrote" className="bg-[#1a2332]">Garrote — 13 a 25 meses</option>
-                  <option value="boi" className="bg-[#1a2332]">Boi — acima de 25 meses</option>
+                  {sexo === "femea" ? (
+                    <>
+                      <option value="bezerro" className="bg-[#1a2332]">Bezerra — 0 a 12 meses</option>
+                      <option value="garrote" className="bg-[#1a2332]">Novilha — 13 a 25 meses</option>
+                      <option value="boi" className="bg-[#1a2332]">Vaca — acima de 25 meses</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="bezerro" className="bg-[#1a2332]">Bezerro — 0 a 12 meses</option>
+                      <option value="garrote" className="bg-[#1a2332]">Garrote — 13 a 25 meses</option>
+                      <option value="boi" className="bg-[#1a2332]">Boi — acima de 25 meses</option>
+                    </>
+                  )}
                 </select>
               </div>
             </div>

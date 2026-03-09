@@ -40,8 +40,8 @@ interface Animal {
 // LABEL MAPS (unchanged)
 // ──────────────────────────────────────────────────────────────────────────────
 const sexoLabel: Record<string, string> = {
-  macho_inteiro: "Macho Inteiro",
-  macho_capado:  "Boi",
+  macho_inteiro: "Macho",
+  macho_capado:  "Macho Castrado",
   femea:         "Fêmea",
 };
 const faixaLabel: Record<string, string> = {
@@ -50,6 +50,13 @@ const faixaLabel: Record<string, string> = {
   boi:     "Boi",
   novilho: "Boi",   // legado → exibe como Boi
   adulto:  "Boi",   // legado → exibe como Boi
+};
+const faixaLabelFemea: Record<string, string> = {
+  bezerro: "Bezerra",
+  garrote: "Novilha",
+  boi:     "Vaca",
+  novilho: "Vaca",
+  adulto:  "Vaca",
 };
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -91,7 +98,11 @@ const calcularFaixaAtual = (animal: Animal): string => {
   return "boi";
 };
 
-const faixaAtualLabel = (animal: Animal): string => faixaLabel[calcularFaixaAtual(animal)] ?? "—";
+const faixaAtualLabel = (animal: Animal): string => {
+  const faixa = calcularFaixaAtual(animal);
+  const map = animal.sexo === "femea" ? faixaLabelFemea : faixaLabel;
+  return map[faixa] ?? "—";
+};
 
 // ──────────────────────────────────────────────────────────────────────────────
 // FILTER LOGIC (unchanged)
@@ -325,6 +336,7 @@ const AnimaisPage = () => {
   const [editPeso, setEditPeso] = useState("");
   const [editObs, setEditObs] = useState("");
   const [editStatus, setEditStatus] = useState("ativo");
+  const [editCastrado, setEditCastrado] = useState(false);
   const [erroEditar, setErroEditar] = useState("");
   const [loadingEditar, setLoadingEditar] = useState(false);
 
@@ -364,16 +376,20 @@ const AnimaisPage = () => {
     setAnimalSel(a); setEditBrinco(a.brinco || "");
     setEditPeso(a.peso_entrada ? String(a.peso_entrada) : "");
     setEditObs(a.observacao || ""); setEditStatus(a.status);
+    setEditCastrado(a.sexo === "macho_capado");
     setErroEditar(""); setModalEditar(true);
   };
 
   const handleEditar = async () => {
     setLoadingEditar(true);
+    const sexoAtualizado = animalSel?.sexo !== "femea"
+      ? (editCastrado ? "macho_capado" : "macho_inteiro")
+      : "femea";
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/animais/${animalSel?.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ brinco: editBrinco, peso_entrada: Number(editPeso) || null, observacao: editObs, status: editStatus }),
+        body: JSON.stringify({ brinco: editBrinco, peso_entrada: Number(editPeso) || null, observacao: editObs, status: editStatus, sexo: sexoAtualizado }),
       });
       const data = await res.json();
       if (!res.ok) { setErroEditar(data.error || "Erro."); return; }
@@ -621,6 +637,18 @@ const AnimaisPage = () => {
               <option value="vendido">Vendido</option>
               <option value="morto">Morto</option>
             </select>
+            {animalSel.sexo !== "femea" && (
+              <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer"
+                style={{ background: "hsl(228,35%,14%)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                <input
+                  type="checkbox"
+                  checked={editCastrado}
+                  onChange={e => setEditCastrado(e.target.checked)}
+                  className="w-4 h-4 accent-[#ff6b35] cursor-pointer"
+                />
+                <span className="text-sm text-white">Animal castrado</span>
+              </label>
+            )}
             {erroEditar && <p className="text-sm text-red-400 text-center">{erroEditar}</p>}
             <div className="flex gap-3 mt-2">
               <button onClick={() => setModalEditar(false)} className="btn-outline-dim flex-1">Cancelar</button>

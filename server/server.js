@@ -644,14 +644,20 @@ app.get('/api/animais', autenticar, (req, res) => {
 });
 
 app.put('/api/animais/:id', autenticar, (req, res) => {
-  const { brinco, peso_entrada, observacao, status } = req.body;
+  const { brinco, peso_entrada, observacao, status, sexo } = req.body;
   const id = req.params.id;
+  const validSexo = ['macho_inteiro', 'macho_capado', 'femea'];
+  const sexoValue = validSexo.includes(sexo) ? sexo : null;
+  const sexoClause = sexoValue ? ', ca.sexo=?' : '';
+  const params = sexoValue
+    ? [req.usuarioId, brinco || null, peso_entrada || null, observacao || null, status || 'ativo', sexoValue, id]
+    : [req.usuarioId, brinco || null, peso_entrada || null, observacao || null, status || 'ativo', id];
   db.query(
     `UPDATE animais a
      INNER JOIN compras_animais ca ON a.compra_id = ca.id AND ca.usuario_id = ?
-     SET a.brinco=?, a.peso_entrada=?, a.observacao=?, a.status=?
+     SET a.brinco=?, a.peso_entrada=?, a.observacao=?, a.status=?${sexoClause}
      WHERE a.id=?`,
-    [req.usuarioId, brinco || null, peso_entrada || null, observacao || null, status || 'ativo', id],
+    params,
     (err) => {
       if (err) return res.status(500).json({ error: 'Erro ao atualizar animal.' });
       res.json({ success: true });
