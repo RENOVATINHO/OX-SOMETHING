@@ -134,12 +134,12 @@ const KpiCard = ({ label, value, icon: Icon, color, gradient, delay = 0, pct, is
         )}
       </div>
 
-      <p className="text-3xl font-black text-white font-mono mb-1">
+      <p className={`font-black text-white font-mono mb-1 ${isCurrency ? "text-xl sm:text-2xl" : "text-3xl"} truncate`}>
         {isCurrency
           ? count.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })
           : count.toLocaleString("pt-BR")}
       </p>
-      <p className="text-xs font-semibold mb-3" style={{ color: "var(--text-secondary)" }}>{label}</p>
+      <p className="text-xs font-semibold mb-3 truncate" style={{ color: "var(--text-secondary)" }}>{label}</p>
 
       <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
         <div className="h-full rounded-full" style={{ width: `${barWidth}%`, background: gradient }} />
@@ -280,7 +280,7 @@ const DashboardPage = () => {
     {
       label: "Valor do Rebanho", value: animalStats.valorTotal,
       icon: DollarSign, color: "#34d399", gradient: "linear-gradient(90deg, #34d399, transparent)",
-      pct: null, isCurrency: true, progressPct: 60,
+      pct: null, isCurrency: true, progressPct: animalStats.valorTotal > 0 ? 100 : 0,
     },
   ];
 

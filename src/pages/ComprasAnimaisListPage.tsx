@@ -125,7 +125,7 @@ const ComprasAnimaisListPage = () => {
               <table className="w-full text-sm">
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)" }}>
-                    {["Nº", "Status", "Sexo", "Faixa", "Qtd", "Valor/kg", "Total", "Vendedor", "Data", "Ações"].map((h) => (
+                    {["Nº", "Status", "Sexo", "Faixa", "Qtd", "Kg Total", "Valor/kg", "Total", "Vendedor", "Data", "Ações"].map((h) => (
                       <th key={h}
                         className={`px-4 py-3.5 font-semibold text-xs uppercase tracking-wider ${h === "Qtd" ? "text-center" : "text-left"}`}
                         style={{ color: "var(--text-secondary)" }}>
@@ -158,6 +158,11 @@ const ComprasAnimaisListPage = () => {
                         <td className="px-4 py-4 text-white">{sexoLabel[c.sexo] || c.sexo}</td>
                         <td className="px-4 py-4 text-white">{faixaLabel[c.faixa_etaria] || c.faixa_etaria}</td>
                         <td className="px-4 py-4 text-center font-mono text-white">{c.quantidade}</td>
+                        <td className="px-4 py-4 font-mono text-white">
+                          {c.peso_total
+                            ? `${c.peso_total.toLocaleString("pt-BR")} kg`
+                            : "—"}
+                        </td>
                         <td className="px-4 py-4 font-mono" style={{ color: "var(--text-secondary)" }}>
                           {formatCurrency(c.valor_kg || 0)}
                         </td>
