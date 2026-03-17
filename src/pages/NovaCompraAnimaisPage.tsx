@@ -15,7 +15,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, FileText, Tag, Hash, DollarSign, Calendar, AlignLeft, PawPrint } from "lucide-react";
+import { User, FileText, Tag, Hash, DollarSign, Calendar, AlignLeft, PawPrint, Weight } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 
 // Tipo mínimo necessário para popular o select de vendedores
@@ -37,6 +37,7 @@ const NovaCompraAnimaisPage = () => {
   const [castrado, setCastrado] = useState(false);         // só aplica quando sexo = "macho"
   const [faixaEtaria, setFaixaEtaria] = useState("");      // "bezerro" | "garrote" | "boi"
   const [quantidade, setQuantidade] = useState("");        // quantos animais desta compra
+  const [pesoTotal, setPesoTotal] = useState("");           // peso total do lote em kg
   const [valorKg, setValorKg] = useState("");              // R$/kg (usado para estimar valor do rebanho)
   const [data, setData] = useState(new Date().toISOString().split("T")[0]); // data padrão: hoje
   const [finalidade, setFinalidade] = useState("");        // finalidade da compra
@@ -101,6 +102,7 @@ const NovaCompraAnimaisPage = () => {
           sexo: sexo === "macho" ? (castrado ? "macho_capado" : "macho_inteiro") : "femea",
           faixa_etaria: faixaEtaria,
           quantidade: Number(quantidade),
+          peso_total: Number(pesoTotal) || null,
           valor_kg: Number(valorKg) || 0,
           data,
           finalidade: finalidade || null,
@@ -115,8 +117,8 @@ const NovaCompraAnimaisPage = () => {
         return;
       }
 
-      // Sucesso: redireciona para a lista de animais
-      navigate("/animais");
+      // Sucesso: redireciona para pesagem de chegada
+      navigate(`/compras-animais/${resultado.id}/pesagem`);
     } catch {
       setError("Não foi possível conectar ao servidor.");
     } finally {
@@ -277,6 +279,28 @@ const NovaCompraAnimaisPage = () => {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Peso total do lote */}
+          <div className="px-5 py-4">
+            <label className="text-xs font-semibold text-[#8892b0] mb-1 block">Peso total do lote (kg)</label>
+            <div className="flex items-center gap-2">
+              <Weight size={14} className="text-[#8892b0]" />
+              <input
+                type="number"
+                value={pesoTotal}
+                onChange={(e) => setPesoTotal(e.target.value)}
+                placeholder="Ex: 3.200 (usado para calcular custo proporcional por animal)"
+                min="0"
+                step="0.1"
+                className="w-full bg-transparent text-white text-sm outline-none placeholder:text-[#4a5568]"
+              />
+            </div>
+            {pesoTotal && valorKg && (
+              <p className="text-xs mt-1.5" style={{ color: "var(--accent-teal)" }}>
+                Valor total estimado: {(Number(pesoTotal) * Number(valorKg)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              </p>
+            )}
           </div>
 
           {/* Data da compra */}
