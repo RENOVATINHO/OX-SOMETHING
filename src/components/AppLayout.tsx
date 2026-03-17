@@ -10,7 +10,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import {
   Home, PawPrint, ShoppingCart, BarChart3, User, LogOut,
   TrendingUp, Edit, Lock, ArrowLeft, Boxes, Skull,
-  Settings, Menu, X, Search, Bell,
+  Settings, Menu, X, Search, Bell, Layers,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -21,6 +21,7 @@ const navItems = [
   { icon: Home,         label: "Dashboard",          route: "/dashboard" },
   { icon: PawPrint,     label: "Rebanho",             route: "/animais" },
   { icon: ShoppingCart, label: "Compras",             route: "/cadastros" },
+  { icon: Layers,       label: "Lotes",               route: "/lotes" },
   { icon: BarChart3,    label: "Relatórios",          route: "/relatorios" },
 ];
 
@@ -42,6 +43,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "/cadastros/novo-vendedor": "Novo Vendedor",
   "/cadastros/novo-pasto":    "Novo Pasto",
   "/compras-animais":         "Compras",
+  "/lotes":                   "Lotes",
   "/relatorios":              "Relatórios",
   "/insumos":                 "Insumos",
   "/insumos/novo":            "Novo Insumo",
@@ -55,6 +57,7 @@ const SECTION_LABEL: Record<string, string> = {
   "/relatorios":  "Relatórios",
   "/insumos":     "Insumos",
   "/compras":     "Compras",
+  "/lotes":       "Lotes",
   "/editar":      "Configurações",
 };
 

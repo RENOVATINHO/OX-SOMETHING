@@ -28,6 +28,10 @@ import NovoInsumoPage from "./pages/NovoInsumoPage";
 import EstoqueInsumosPage from "./pages/EstoqueInsumosPage";
 import NovaVendaPage from "./pages/NovaVendaPage";
 import ConfiguracoesPage from "./pages/ConfiguracoesPage";
+import PesagemChegadaPage from "./pages/PesagemChegadaPage";
+import SepararLotesPage from "./pages/SepararLotesPage";
+import LotesPage from "./pages/LotesPage";
+import LoteDetalhePage from "./pages/LoteDetalhePage";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +60,10 @@ const App = () => (
             <Route path="/editar-cadastro" element={<EditarCadastroPage />} />
             <Route path="/nova-venda" element={<NovaVendaPage />} />
             <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+            <Route path="/compras-animais/:compraId/pesagem" element={<PesagemChegadaPage />} />
+            <Route path="/compras-animais/:compraId/lotes" element={<SepararLotesPage />} />
+            <Route path="/lotes" element={<LotesPage />} />
+            <Route path="/lotes/:loteId" element={<LoteDetalhePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
