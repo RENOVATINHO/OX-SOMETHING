@@ -129,6 +129,37 @@ async function initDB() {
       FOREIGN KEY (compra_id) REFERENCES compras_animais(id) ON DELETE SET NULL
     )`);
 
+    await conn.query(`CREATE TABLE IF NOT EXISTS lotes (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      usuario_id INT NOT NULL,
+      nome VARCHAR(100) NOT NULL,
+      tipo ENUM('engorda','cria_recria','descarte','outro') NOT NULL,
+      local_pasto VARCHAR(200),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+    )`);
+
+    await conn.query(`CREATE TABLE IF NOT EXISTS pesagens (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      animal_id INT NOT NULL,
+      peso DECIMAL(10,2) NOT NULL,
+      data DATE NOT NULL,
+      observacao TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (animal_id) REFERENCES animais(id)
+    )`);
+
+    await conn.query(`CREATE TABLE IF NOT EXISTS custos_lote (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      lote_id INT NOT NULL,
+      tipo VARCHAR(100) NOT NULL,
+      descricao TEXT,
+      valor DECIMAL(10,2) NOT NULL,
+      data DATE NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (lote_id) REFERENCES lotes(id)
+    )`);
+
     await conn.query(`CREATE TABLE IF NOT EXISTS compras_insumos (
       id INT AUTO_INCREMENT PRIMARY KEY,
       usuario_id INT,
@@ -206,6 +237,46 @@ async function initDB() {
       if (!e.message.includes('Duplicate column')) {
         console.log('ℹ️ Coluna tipo já existe em vendedores.');
       }
+    }
+
+    // Migração: adicionar peso_total em compras_animais
+    try {
+      await conn.query(`ALTER TABLE compras_animais ADD COLUMN peso_total DECIMAL(10,2) DEFAULT NULL`);
+      console.log('✅ Coluna peso_total adicionada em compras_animais.');
+    } catch (e) {
+      if (!e.message.includes('Duplicate column')) console.log('ℹ️ peso_total já existe em compras_animais.');
+    }
+
+    // Migração: adicionar status_chegada em compras_animais
+    try {
+      await conn.query(`ALTER TABLE compras_animais ADD COLUMN status_chegada ENUM('aguardando_chegada','pesagem_parcial','pesagem_completa','lotes_definidos') DEFAULT 'aguardando_chegada'`);
+      console.log('✅ Coluna status_chegada adicionada em compras_animais.');
+    } catch (e) {
+      if (!e.message.includes('Duplicate column')) console.log('ℹ️ status_chegada já existe em compras_animais.');
+    }
+
+    // Migração: adicionar lote_id em animais
+    try {
+      await conn.query(`ALTER TABLE animais ADD COLUMN lote_id INT DEFAULT NULL`);
+      console.log('✅ Coluna lote_id adicionada em animais.');
+    } catch (e) {
+      if (!e.message.includes('Duplicate column')) console.log('ℹ️ lote_id já existe em animais.');
+    }
+
+    // Migração: adicionar peso_chegada em animais
+    try {
+      await conn.query(`ALTER TABLE animais ADD COLUMN peso_chegada DECIMAL(10,2) DEFAULT NULL`);
+      console.log('✅ Coluna peso_chegada adicionada em animais.');
+    } catch (e) {
+      if (!e.message.includes('Duplicate column')) console.log('ℹ️ peso_chegada já existe em animais.');
+    }
+
+    // Migração: adicionar custo_real em animais
+    try {
+      await conn.query(`ALTER TABLE animais ADD COLUMN custo_real DECIMAL(10,2) DEFAULT NULL`);
+      console.log('✅ Coluna custo_real adicionada em animais.');
+    } catch (e) {
+      if (!e.message.includes('Duplicate column')) console.log('ℹ️ custo_real já existe em animais.');
     }
 
     console.log('✅ Tabelas verificadas/criadas com sucesso!');
@@ -568,15 +639,15 @@ app.get('/api/compras-animais', autenticar, (req, res) => {
 
 // POST /api/compras-animais — compra normal com vendedor
 app.post('/api/compras-animais', autenticar, (req, res) => {
-  const { vendedor_id, numero_gta, sexo, faixa_etaria, quantidade, valor_kg, data, observacao, finalidade } = req.body;
+  const { vendedor_id, numero_gta, sexo, faixa_etaria, quantidade, peso_total, valor_kg, data, observacao, finalidade } = req.body;
   if (!vendedor_id || !sexo || !faixa_etaria || !quantidade || !data)
     return res.status(400).json({ error: 'Preencha todos os campos obrigatórios.' });
 
   getProximoNumero(req.usuarioId, async (numeroCompra) => {
     try {
       const [result] = await db.promise().query(
-        'INSERT INTO compras_animais (usuario_id, vendedor_id, numero_gta, numero_compra, sexo, faixa_etaria, quantidade, valor_kg, data, observacao, finalidade) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [req.usuarioId, vendedor_id, numero_gta || null, numeroCompra, sexo, faixa_etaria, Number(quantidade), valor_kg || 0, data, observacao || null, finalidade || null]
+        'INSERT INTO compras_animais (usuario_id, vendedor_id, numero_gta, numero_compra, sexo, faixa_etaria, quantidade, peso_total, valor_kg, data, observacao, finalidade) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [req.usuarioId, vendedor_id, numero_gta || null, numeroCompra, sexo, faixa_etaria, Number(quantidade), peso_total || null, valor_kg || 0, data, observacao || null, finalidade || null]
       );
       const compraId = result.insertId;
       const animais = Array.from({ length: Number(quantidade) }, () => [compraId, null, null, null, 'ativo', 'compra']);
@@ -836,6 +907,306 @@ app.post('/api/compras-insumos', autenticar, (req, res) => {
       res.status(201).json({ id: result.insertId, message: 'Compra de insumo registrada.' });
     }
   );
+});
+
+// ==============================
+// LOTES
+// ==============================
+
+app.get('/api/lotes', autenticar, (req, res) => {
+  db.query(
+    `SELECT l.*,
+       COUNT(a.id) as total_animais,
+       AVG(a.peso_chegada) as peso_medio,
+       SUM(COALESCE(a.custo_real, 0)) as investimento_total
+     FROM lotes l
+     LEFT JOIN animais a ON a.lote_id = l.id AND a.status = 'ativo'
+     WHERE l.usuario_id = ?
+     GROUP BY l.id
+     ORDER BY l.created_at DESC`,
+    [req.usuarioId],
+    (err, results) => {
+      if (err) return res.status(500).json({ error: 'Erro ao buscar lotes.' });
+      res.json(results);
+    }
+  );
+});
+
+app.post('/api/lotes', autenticar, (req, res) => {
+  const { nome, tipo, local_pasto } = req.body;
+  if (!nome || !tipo) return res.status(400).json({ error: 'Nome e tipo são obrigatórios.' });
+  db.query(
+    'INSERT INTO lotes (usuario_id, nome, tipo, local_pasto) VALUES (?, ?, ?, ?)',
+    [req.usuarioId, nome, tipo, local_pasto || null],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: 'Erro ao criar lote.' });
+      res.status(201).json({ id: result.insertId, message: 'Lote criado.' });
+    }
+  );
+});
+
+app.get('/api/lotes/:id', autenticar, (req, res) => {
+  const id = req.params.id;
+  db.query('SELECT * FROM lotes WHERE id = ? AND usuario_id = ?', [id, req.usuarioId], (err, lotes) => {
+    if (err) return res.status(500).json({ error: 'Erro no servidor.' });
+    if (lotes.length === 0) return res.status(404).json({ error: 'Lote não encontrado.' });
+    db.query(
+      `SELECT a.id, a.brinco, a.peso_chegada, a.custo_real, a.status,
+              ca.sexo, ca.faixa_etaria, ca.numero_compra
+       FROM animais a
+       LEFT JOIN compras_animais ca ON a.compra_id = ca.id
+       WHERE a.lote_id = ? AND a.status = 'ativo'
+       ORDER BY a.id ASC`,
+      [id],
+      (err, animais) => {
+        if (err) return res.status(500).json({ error: 'Erro ao buscar animais.' });
+        res.json({ ...lotes[0], animais });
+      }
+    );
+  });
+});
+
+app.delete('/api/lotes/:id', autenticar, (req, res) => {
+  const id = req.params.id;
+  db.query('SELECT id FROM lotes WHERE id = ? AND usuario_id = ?', [id, req.usuarioId], (err, results) => {
+    if (err) return res.status(500).json({ error: 'Erro no servidor.' });
+    if (results.length === 0) return res.status(404).json({ error: 'Lote não encontrado.' });
+    db.query('UPDATE animais SET lote_id = NULL WHERE lote_id = ?', [id], (err) => {
+      if (err) return res.status(500).json({ error: 'Erro ao desassociar animais.' });
+      db.query('DELETE FROM custos_lote WHERE lote_id = ?', [id], (err) => {
+        if (err) return res.status(500).json({ error: 'Erro ao excluir custos.' });
+        db.query('DELETE FROM lotes WHERE id = ? AND usuario_id = ?', [id, req.usuarioId], (err) => {
+          if (err) return res.status(500).json({ error: 'Erro ao excluir lote.' });
+          res.json({ success: true });
+        });
+      });
+    });
+  });
+});
+
+app.get('/api/lotes/:id/custos', autenticar, async (req, res) => {
+  const id = req.params.id;
+  try {
+    const [lotes] = await db.promise().query(
+      'SELECT id FROM lotes WHERE id = ? AND usuario_id = ?', [id, req.usuarioId]
+    );
+    if (lotes.length === 0) return res.status(404).json({ error: 'Lote não encontrado.' });
+    const [custos] = await db.promise().query(
+      'SELECT * FROM custos_lote WHERE lote_id = ? ORDER BY data DESC', [id]
+    );
+    res.json(custos);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao buscar custos.' });
+  }
+});
+
+// ==============================
+// COMPRAS — PESAGEM E STATUS
+// ==============================
+
+app.get('/api/compras-animais/:id/animais', autenticar, async (req, res) => {
+  const id = req.params.id;
+  try {
+    const [compras] = await db.promise().query(
+      `SELECT ca.*, v.nome as vendedor_nome
+       FROM compras_animais ca
+       LEFT JOIN vendedores v ON ca.vendedor_id = v.id
+       WHERE ca.id = ? AND ca.usuario_id = ?`,
+      [id, req.usuarioId]
+    );
+    if (compras.length === 0) return res.status(404).json({ error: 'Compra não encontrada.' });
+    const [animais] = await db.promise().query(
+      'SELECT id, brinco, peso_entrada, peso_chegada, custo_real, status, lote_id FROM animais WHERE compra_id = ? ORDER BY id ASC',
+      [id]
+    );
+    res.json({ compra: compras[0], animais });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao buscar animais da compra.' });
+  }
+});
+
+app.put('/api/compras-animais/:id/pesagem', autenticar, async (req, res) => {
+  const compraId = req.params.id;
+  const { brinco, peso } = req.body;
+  if (!peso || Number(peso) <= 0) return res.status(400).json({ error: 'Informe um peso válido.' });
+  try {
+    const [compras] = await db.promise().query(
+      'SELECT * FROM compras_animais WHERE id = ? AND usuario_id = ?',
+      [compraId, req.usuarioId]
+    );
+    if (compras.length === 0) return res.status(404).json({ error: 'Compra não encontrada.' });
+    const compra = compras[0];
+    const pesoTotal = parseFloat(compra.peso_total) || 0;
+    const valorKg = parseFloat(compra.valor_kg) || 0;
+    const valorTotal = pesoTotal * valorKg;
+    const custoReal = pesoTotal > 0
+      ? (parseFloat(peso) / pesoTotal) * valorTotal
+      : parseFloat(peso) * valorKg;
+
+    // Pega próximo animal sem peso_chegada desta compra
+    const [semPeso] = await db.promise().query(
+      'SELECT id FROM animais WHERE compra_id = ? AND peso_chegada IS NULL ORDER BY id ASC LIMIT 1',
+      [compraId]
+    );
+    if (semPeso.length === 0)
+      return res.status(400).json({ error: 'Todos os animais desta compra já foram pesados.' });
+
+    const animalId = semPeso[0].id;
+    await db.promise().query(
+      'UPDATE animais SET brinco = ?, peso_chegada = ?, custo_real = ? WHERE id = ?',
+      [brinco || null, parseFloat(peso), custoReal, animalId]
+    );
+    // Atualiza status para pesagem_parcial se ainda aguardando
+    await db.promise().query(
+      `UPDATE compras_animais SET status_chegada = 'pesagem_parcial'
+       WHERE id = ? AND status_chegada = 'aguardando_chegada'`,
+      [compraId]
+    );
+    res.json({ success: true, animal_id: animalId, custo_real: custoReal });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao registrar pesagem.' });
+  }
+});
+
+app.put('/api/compras-animais/:id/status', autenticar, async (req, res) => {
+  const id = req.params.id;
+  const { status_chegada } = req.body;
+  const validos = ['aguardando_chegada', 'pesagem_parcial', 'pesagem_completa', 'lotes_definidos'];
+  if (!validos.includes(status_chegada))
+    return res.status(400).json({ error: 'Status inválido.' });
+  try {
+    await db.promise().query(
+      'UPDATE compras_animais SET status_chegada = ? WHERE id = ? AND usuario_id = ?',
+      [status_chegada, id, req.usuarioId]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao atualizar status.' });
+  }
+});
+
+// ==============================
+// ANIMAIS — LOTES
+// ==============================
+
+// POST /api/animais/mover-lote — batch move (deve vir ANTES de /:id)
+app.post('/api/animais/mover-lote', autenticar, async (req, res) => {
+  const { animal_ids, lote_id } = req.body;
+  if (!animal_ids || !Array.isArray(animal_ids) || animal_ids.length === 0)
+    return res.status(400).json({ error: 'Informe os animais.' });
+  try {
+    if (lote_id) {
+      const [lotes] = await db.promise().query(
+        'SELECT id FROM lotes WHERE id = ? AND usuario_id = ?', [lote_id, req.usuarioId]
+      );
+      if (lotes.length === 0) return res.status(404).json({ error: 'Lote não encontrado.' });
+    }
+    await db.promise().query(
+      `UPDATE animais a
+       INNER JOIN compras_animais ca ON a.compra_id = ca.id AND ca.usuario_id = ?
+       SET a.lote_id = ?
+       WHERE a.id IN (?)`,
+      [req.usuarioId, lote_id || null, animal_ids]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao mover animais.' });
+  }
+});
+
+app.put('/api/animais/:id/lote', autenticar, async (req, res) => {
+  const animalId = req.params.id;
+  const { lote_id } = req.body;
+  try {
+    const [rows] = await db.promise().query(
+      `SELECT a.id FROM animais a
+       INNER JOIN compras_animais ca ON a.compra_id = ca.id AND ca.usuario_id = ?
+       WHERE a.id = ?`,
+      [req.usuarioId, animalId]
+    );
+    if (rows.length === 0) return res.status(404).json({ error: 'Animal não encontrado.' });
+    if (lote_id) {
+      const [lotes] = await db.promise().query(
+        'SELECT id FROM lotes WHERE id = ? AND usuario_id = ?', [lote_id, req.usuarioId]
+      );
+      if (lotes.length === 0) return res.status(404).json({ error: 'Lote não encontrado.' });
+    }
+    await db.promise().query('UPDATE animais SET lote_id = ? WHERE id = ?', [lote_id || null, animalId]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao mover animal.' });
+  }
+});
+
+// ==============================
+// PESAGENS DE ACOMPANHAMENTO
+// ==============================
+
+app.post('/api/pesagens', autenticar, async (req, res) => {
+  const { animal_id, peso, data, observacao } = req.body;
+  if (!animal_id || !peso || !data)
+    return res.status(400).json({ error: 'Informe animal, peso e data.' });
+  try {
+    const [rows] = await db.promise().query(
+      `SELECT a.id FROM animais a
+       INNER JOIN compras_animais ca ON a.compra_id = ca.id AND ca.usuario_id = ?
+       WHERE a.id = ?`,
+      [req.usuarioId, animal_id]
+    );
+    if (rows.length === 0) return res.status(404).json({ error: 'Animal não encontrado.' });
+    const [result] = await db.promise().query(
+      'INSERT INTO pesagens (animal_id, peso, data, observacao) VALUES (?, ?, ?, ?)',
+      [animal_id, peso, data, observacao || null]
+    );
+    res.status(201).json({ id: result.insertId });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao registrar pesagem.' });
+  }
+});
+
+app.get('/api/animais/:id/pesagens', autenticar, async (req, res) => {
+  const animalId = req.params.id;
+  try {
+    const [rows] = await db.promise().query(
+      `SELECT a.id FROM animais a
+       INNER JOIN compras_animais ca ON a.compra_id = ca.id AND ca.usuario_id = ?
+       WHERE a.id = ?`,
+      [req.usuarioId, animalId]
+    );
+    if (rows.length === 0) return res.status(404).json({ error: 'Animal não encontrado.' });
+    const [pesagens] = await db.promise().query(
+      'SELECT * FROM pesagens WHERE animal_id = ? ORDER BY data DESC', [animalId]
+    );
+    res.json(pesagens);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao buscar pesagens.' });
+  }
+});
+
+// ==============================
+// CUSTOS DE LOTE
+// ==============================
+
+app.post('/api/custos-lote', autenticar, async (req, res) => {
+  const { lote_id, tipo, descricao, valor, data } = req.body;
+  if (!lote_id || !tipo || !valor || !data)
+    return res.status(400).json({ error: 'Informe lote, tipo, valor e data.' });
+  try {
+    const [lotes] = await db.promise().query(
+      'SELECT id FROM lotes WHERE id = ? AND usuario_id = ?', [lote_id, req.usuarioId]
+    );
+    if (lotes.length === 0) return res.status(404).json({ error: 'Lote não encontrado.' });
+    const [result] = await db.promise().query(
+      'INSERT INTO custos_lote (lote_id, tipo, descricao, valor, data) VALUES (?, ?, ?, ?, ?)',
+      [lote_id, tipo, descricao || null, valor, data]
+    );
+    res.status(201).json({ id: result.insertId });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao adicionar custo.' });
+  }
 });
 
 // ==============================

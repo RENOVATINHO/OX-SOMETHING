@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Plus, ShoppingCart } from "lucide-react";
+import { Search, Plus, ShoppingCart, Scale, Layers } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 
 interface CompraAnimal {
@@ -9,12 +9,21 @@ interface CompraAnimal {
   sexo: string;
   faixa_etaria: string;
   quantidade: number;
+  peso_total: number | null;
   valor_kg: number;
   data: string;
   numero_gta: string | null;
   observacao: string | null;
   vendedor_nome: string | null;
+  status_chegada: string | null;
 }
+
+const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
+  aguardando_chegada: { label: "Aguardando",    color: "#fbbf24", bg: "rgba(251,191,36,0.12)" },
+  pesagem_parcial:    { label: "Pesagem parcial", color: "#00e5ff", bg: "rgba(0,229,255,0.10)" },
+  pesagem_completa:   { label: "Pesada",         color: "#4ade80", bg: "rgba(74,222,128,0.10)" },
+  lotes_definidos:    { label: "Nos lotes",      color: "#a78bfa", bg: "rgba(167,139,250,0.12)" },
+};
 
 const sexoLabel: Record<string, string> = {
   macho_inteiro: "Macho Inteiro",
@@ -116,7 +125,7 @@ const ComprasAnimaisListPage = () => {
               <table className="w-full text-sm">
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)" }}>
-                    {["Nº", "Sexo", "Faixa", "Qtd", "Valor/kg", "Total", "GTA", "Vendedor", "Data"].map((h) => (
+                    {["Nº", "Status", "Sexo", "Faixa", "Qtd", "Valor/kg", "Total", "Vendedor", "Data", "Ações"].map((h) => (
                       <th key={h}
                         className={`px-4 py-3.5 font-semibold text-xs uppercase tracking-wider ${h === "Qtd" ? "text-center" : "text-left"}`}
                         style={{ color: "var(--text-secondary)" }}>
@@ -126,34 +135,67 @@ const ComprasAnimaisListPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtradas.map((c, index) => (
-                    <tr key={c.id}
-                      style={{
-                        borderBottom: "1px solid rgba(255,255,255,0.05)",
-                        background: index % 2 === 1 ? "rgba(255,255,255,0.015)" : "transparent",
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,107,53,0.04)")}
-                      onMouseLeave={e => (e.currentTarget.style.background = index % 2 === 1 ? "rgba(255,255,255,0.015)" : "transparent")}
-                    >
-                      <td className="px-4 py-4 font-mono font-bold" style={{ color: "var(--accent-orange)" }}>
-                        #{c.numero_compra}
-                      </td>
-                      <td className="px-4 py-4 text-white">{sexoLabel[c.sexo] || c.sexo}</td>
-                      <td className="px-4 py-4 text-white">{faixaLabel[c.faixa_etaria] || c.faixa_etaria}</td>
-                      <td className="px-4 py-4 text-center font-mono text-white">{c.quantidade}</td>
-                      <td className="px-4 py-4 font-mono" style={{ color: "var(--text-secondary)" }}>
-                        {formatCurrency(c.valor_kg || 0)}
-                      </td>
-                      <td className="px-4 py-4 font-mono font-bold" style={{ color: "var(--accent-orange)" }}>
-                        {formatCurrency((c.quantidade || 0) * (c.valor_kg || 0))}
-                      </td>
-                      <td className="px-4 py-4" style={{ color: "var(--text-secondary)" }}>{c.numero_gta || "—"}</td>
-                      <td className="px-4 py-4" style={{ color: "var(--text-secondary)" }}>{c.vendedor_nome || "—"}</td>
-                      <td className="px-4 py-4 font-mono" style={{ color: "var(--text-secondary)" }}>
-                        {formatDate(c.data)}
-                      </td>
-                    </tr>
-                  ))}
+                  {filtradas.map((c, index) => {
+                    const st = statusConfig[c.status_chegada || "aguardando_chegada"];
+                    return (
+                      <tr key={c.id}
+                        style={{
+                          borderBottom: "1px solid rgba(255,255,255,0.05)",
+                          background: index % 2 === 1 ? "rgba(255,255,255,0.015)" : "transparent",
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,107,53,0.04)")}
+                        onMouseLeave={e => (e.currentTarget.style.background = index % 2 === 1 ? "rgba(255,255,255,0.015)" : "transparent")}
+                      >
+                        <td className="px-4 py-4 font-mono font-bold" style={{ color: "var(--accent-orange)" }}>
+                          #{c.numero_compra}
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap"
+                            style={{ color: st.color, background: st.bg }}>
+                            {st.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-white">{sexoLabel[c.sexo] || c.sexo}</td>
+                        <td className="px-4 py-4 text-white">{faixaLabel[c.faixa_etaria] || c.faixa_etaria}</td>
+                        <td className="px-4 py-4 text-center font-mono text-white">{c.quantidade}</td>
+                        <td className="px-4 py-4 font-mono" style={{ color: "var(--text-secondary)" }}>
+                          {formatCurrency(c.valor_kg || 0)}
+                        </td>
+                        <td className="px-4 py-4 font-mono font-bold" style={{ color: "var(--accent-orange)" }}>
+                          {c.peso_total
+                            ? formatCurrency((c.peso_total || 0) * (c.valor_kg || 0))
+                            : formatCurrency((c.quantidade || 0) * (c.valor_kg || 0))}
+                        </td>
+                        <td className="px-4 py-4" style={{ color: "var(--text-secondary)" }}>{c.vendedor_nome || "—"}</td>
+                        <td className="px-4 py-4 font-mono" style={{ color: "var(--text-secondary)" }}>
+                          {formatDate(c.data)}
+                        </td>
+                        <td className="px-4 py-4">
+                          {(c.status_chegada === "aguardando_chegada" || c.status_chegada === "pesagem_parcial" || !c.status_chegada) && (
+                            <button
+                              onClick={() => navigate(`/compras-animais/${c.id}/pesagem`)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                              style={{ background: "rgba(0,229,255,0.10)", color: "#00e5ff", border: "1px solid rgba(0,229,255,0.2)" }}
+                            >
+                              <Scale size={12} /> Pesar
+                            </button>
+                          )}
+                          {c.status_chegada === "pesagem_completa" && (
+                            <button
+                              onClick={() => navigate(`/compras-animais/${c.id}/lotes`)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                              style={{ background: "rgba(124,58,237,0.12)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.25)" }}
+                            >
+                              <Layers size={12} /> Separar em lotes
+                            </button>
+                          )}
+                          {c.status_chegada === "lotes_definidos" && (
+                            <span className="text-xs" style={{ color: "var(--text-muted)" }}>Concluída</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
